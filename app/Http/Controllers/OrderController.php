@@ -38,6 +38,12 @@ class OrderController extends Controller
         return redirect()->route('pos.index');
     }
 
+    public function getUpdate(Request $request, $id)
+    {
+        // Orders are not edited via CRUD form; the detail page holds actions.
+        return redirect()->route('order.getShow', ['id' => $id]);
+    }
+
     public function postTransit(Request $request, $id)
     {
         $order = $this->model->findOrFail($id);
