@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Livewire\Pos\PosTerminal;
 use App\Models\Kategori;
 use App\Models\Laundry;
+use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
 use Livewire\Livewire;
@@ -51,12 +52,15 @@ it('clamps qty between 1 and 999 and removes lines', function () {
 it('confirms walk-in order via POS and redirects to struk', function () {
     [$user, $product] = posFixture();
 
-    Livewire::actingAs($user)
+    $test = Livewire::actingAs($user)
         ->test(PosTerminal::class)
         ->set('walkinMode', true)
         ->set('walkinNama', 'Budi')
         ->set('walkinTelepon', '081234567890')
         ->call('addToCart', $product->getKey())
-        ->call('confirmOrder')
-        ->assertRedirect(route('order.getShow', ['id' => 1]));
+        ->call('confirmOrder');
+
+    $order = Order::latest('order_id')->first();
+
+    $test->assertRedirect(route('order.getShow', ['id' => $order->getKey()]));
 });

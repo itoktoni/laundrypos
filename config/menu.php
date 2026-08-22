@@ -28,6 +28,16 @@ return [
             ],
         ],
         [
+            'label' => 'Laundry',
+            'items' => [
+                ['route' => 'pos.index', 'icon' => 'point_of_sale', 'label' => 'POS Kasir'],
+                ['route' => 'order.getTable', 'icon' => 'receipt_long', 'label' => 'Orders', 'match' => ['order.*']],
+                ['route' => 'customer.getTable', 'icon' => 'people', 'label' => 'Customers', 'match' => ['customer.*']],
+                ['route' => 'kategori.getTable', 'icon' => 'category', 'label' => 'Kategori', 'match' => ['kategori.*']],
+                ['route' => 'product.getTable', 'icon' => 'local_laundry_service', 'label' => 'Products', 'match' => ['product.*']],
+            ],
+        ],
+        [
             'label' => 'CMS',
             'items' => [
                 ['route' => 'cms-type.getTable', 'icon' => 'category', 'label' => 'Types', 'match' => ['cms-type.*']],

@@ -14,6 +14,8 @@ it('generates order codes with daily reset', function () {
     $code1 = Order::generateCode();
     expect($code1)->toMatch('/^LDY-\d{8}-0001$/');
 
+    $statusId = (int) DB::table('order_status')->min('order_status_id');
+
     DB::table('order')->insert([
         'order_id_laundry' => Laundry::first()->laundry_id,
         'order_code' => $code1,
@@ -22,7 +24,7 @@ it('generates order codes with daily reset', function () {
         'order_metode_pembayaran' => 'tunai',
         'order_subtotal' => 0.01,
         'order_total' => 0.01,
-        'order_status_id' => 1,
+        'order_status_id' => $statusId,
         'created_at' => now(),
         'updated_at' => now(),
     ]);
