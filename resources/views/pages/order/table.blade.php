@@ -1,4 +1,4 @@
-<?php /** @var App\Models\Product $model */ ?>
+<?php /** @var App\Models\Order $model */ ?>
 
 <x-layouts::app>
     <x-breadcrumb :items="[['url' => '/dashboard', 'label' => 'Home'], ['url' => '', 'label' => moduleLabel()]]" />
@@ -17,26 +17,24 @@
         <x-table>
             <x-slot:head>
                 <th>Actions</th>
-                <th>Nama</th>
-                <th>Kategori</th>
-                <th>Satuan</th>
-                <th>Harga</th>
-                <th>Aktif</th>
+                <th>Kode</th>
+                <th>Status</th>
+                <th>Total</th>
+                <th>Tanggal</th>
             </x-slot:head>
 
             <x-slot:body>
                 @foreach ($data as $table)
                     <tr>
                         <x-table-action :model="$model" :id="$table->field_primary" />
-                        <td>{{ $table->product_nama }}</td>
-                        <td>{{ $table->hasKategori?->kategori_nama ?? '-' }}</td>
-                        <td>{{ $table->product_satuan?->description ?? $table->product_satuan }}</td>
-                        <td>{{ formatAngka($table->product_harga_dasar) }}</td>
+                        <td><a class="link" href="{{ route('order.getShow', ['id' => $table->field_primary]) }}">{{ $table->order_code }}</a></td>
                         <td>
-                            <span class="badge {{ $table->product_is_aktif ? 'badge-success' : 'badge-error' }}">
-                                {{ $table->product_is_aktif ? 'Aktif' : 'Nonaktif' }}
+                            <span class="badge badge-outline" style="border-color: {{ $table->hasStatus?->order_status_warna }}">
+                                {{ $table->hasStatus?->order_status_nama ?? '-' }}
                             </span>
                         </td>
+                        <td>{{ formatAngka($table->order_total) }}</td>
+                        <td>{{ formatDate($table->created_at) }}</td>
                     </tr>
                 @endforeach
             </x-slot:body>
