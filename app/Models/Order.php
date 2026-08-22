@@ -6,6 +6,8 @@ use App\Concerns\BelongsToLaundry;
 use App\Enums\MetodePembayaranEnum;
 use App\Enums\MetodePengambilanEnum;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 #[Fillable([
     'order_code', 'order_id_customer', 'order_walkin_nama', 'order_walkin_telepon', 'order_id_user',
@@ -15,6 +17,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 class Order extends BaseModel
 {
     use BelongsToLaundry;
+
     protected $table = 'order';
 
     protected $primaryKey = 'order_id';
@@ -80,5 +83,61 @@ class Order extends BaseModel
     public function hasStatusLogs()
     {
         return $this->hasMany(OrderStatusLog::class, 'order_status_log_id_order', 'order_id')->orderBy('created_at');
+    }
+
+    /**
+     * Transition the order to another status following the laundry's flow:
+     * forward one step at a time, or cancellation from any non-terminal status
+     * with a mandatory reason.
+     */
+    public function transitStatus(OrderStatus $to, ?string $keterangan = null): void
+    {
+        $current = $this->hasStatus;
+
+        if ($current && $current->order_status_is_selesai) {
+            throw ValidationException::withMessages([
+                'status' => ['Order sudah selesai, status tidak dapat diubah.'],
+            ]);
+        }
+
+        if ($to->order_status_is_batal) {
+            if ($keterangan === null || trim($keterangan) === '') {
+                throw ValidationException::withMessages([
+                    'keterangan' => ['Alasan pembatalan wajib diisi.'],
+                ]);
+            }
+        } else {
+            $statuses = OrderStatus::get()->values();
+            $currentIndex = $statuses->search(fn ($s) => $s->getKey() === $current?->getKey());
+            $targetIndex = $statuses->search(fn ($s) => $s->getKey() === $to->getKey());
+
+            if ($currentIndex === false || $targetIndex !== $currentIndex + 1) {
+                $nextName = ($currentIndex !== false && isset($statuses[$currentIndex + 1]))
+                    ? $statuses[$currentIndex + 1]->order_status_nama
+                    : '-';
+
+                throw ValidationException::withMessages([
+                    'status' => ["Perpindahan status tidak valid. Status berikutnya yang diizinkan: {$nextName}"],
+                ]);
+            }
+        }
+
+        if (mb_strlen((string) $keterangan) > 255) {
+            throw ValidationException::withMessages([
+                'keterangan' => ['Keterangan maksimal 255 karakter.'],
+            ]);
+        }
+
+        DB::transaction(function () use ($to, $keterangan): void {
+            OrderStatusLog::create([
+                'order_status_log_id_order' => $this->getKey(),
+                'order_status_log_id_from' => $this->order_status_id,
+                'order_status_log_id_to' => $to->getKey(),
+                'order_status_log_id_user' => auth()->id(),
+                'order_status_log_keterangan' => $to->order_status_is_batal ? $keterangan : null,
+            ]);
+
+            $this->update(['order_status_id' => $to->getKey()]);
+        });
     }
 }
