@@ -39,6 +39,8 @@ Route::middleware(['auth', 'verified', 'access', 'laundry.selected'])->group(fun
 
     Route::auto('/user', 'UsersController', ['name' => 'user']);
 
+    Route::auto('/kategori', 'KategoriController', ['name' => 'kategori']);
+
     Route::get('/native-bridge-test', function () {
         return view('pages.settings.native-bridge-test');
     })->name('native-bridge-test');
