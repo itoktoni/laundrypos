@@ -39,7 +39,26 @@
 
         {{-- Progress stepper along the laundry's own flow --}}
         @if (! $isBatal)
-            <ol class="flex items-start overflow-x-auto pb-1 -mx-1 px-1">
+            {{-- Mobile: wrapped grid, no horizontal scroll --}}
+            <ol class="lg:hidden grid grid-cols-2 gap-2">
+                @foreach ($statuses->where('order_status_is_batal', false) as $step)
+                    @php($stepIndex = $statuses->search($step))
+                    @php($state = $stepIndex < $currentIndex ? 'done' : ($stepIndex === $currentIndex ? 'now' : 'todo'))
+                    <li class="flex items-center gap-2 rounded-lg px-3 py-2 text-xs
+                        {{ $state === 'now' ? 'bg-primary text-on-primary font-semibold'
+                            : ($state === 'done' ? 'bg-primary/10 text-primary' : 'border border-outline-variant text-on-surface-variant') }}">
+                        <span class="w-5 h-5 rounded-full grid place-items-center text-[10px] font-bold shrink-0
+                            {{ $state === 'now' ? 'bg-on-primary/20'
+                                : ($state === 'done' ? 'bg-primary/15' : 'border border-outline-variant') }}">
+                            @if ($state === 'done') ✓@else {{ $loop->index + 1 }} @endif
+                        </span>
+                        <span class="leading-tight">{{ $step->order_status_nama }}</span>
+                    </li>
+                @endforeach
+            </ol>
+
+            {{-- Desktop: connected horizontal flow --}}
+            <ol class="hidden lg:flex items-start -mx-1 px-1">
                 @foreach ($statuses->where('order_status_is_batal', false) as $step)
                     @php($stepIndex = $statuses->search($step))
                     @php($state = $stepIndex < $currentIndex ? 'done' : ($stepIndex === $currentIndex ? 'now' : 'todo'))
@@ -66,7 +85,23 @@
             {{-- Main: items + grouped details --}}
             <div class="lg:col-span-2 space-y-6">
                 <section aria-label="Rincian item">
-                    <table class="w-full text-sm">
+                    {{-- Mobile: stacked list --}}
+                    <ul class="sm:hidden divide-y divide-outline-variant/40">
+                        @foreach ($order->hasItems as $item)
+                            <li class="py-3">
+                                <div class="flex items-baseline justify-between gap-2">
+                                    <p class="text-sm font-medium min-w-0">{{ $item->order_item_nama_product }}</p>
+                                    <p class="text-sm font-semibold tabular-nums whitespace-nowrap">{{ formatAngka($item->order_item_subtotal) }}</p>
+                                </div>
+                                <p class="text-xs text-on-surface-variant mt-0.5">
+                                    {{ formatQty($item->order_item_qty) }} {{ $item->order_item_satuan }} × {{ formatAngka($item->order_item_harga) }}
+                                </p>
+                            </li>
+                        @endforeach
+                    </ul>
+
+                    {{-- Desktop: table --}}
+                    <table class="hidden sm:table w-full text-sm">
                         <thead>
                             <tr class="border-b border-outline-variant text-left text-xs uppercase tracking-wide text-on-surface-variant">
                                 <th class="py-2 pr-2 font-medium">Produk</th>
