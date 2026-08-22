@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LaundryController;
+use App\Http\Controllers\OrderController;
 use App\Http\Controllers\WebsiteSettingController;
 use App\Models\Notification;
 use App\Services\CentrifugoService;
@@ -48,6 +49,9 @@ Route::middleware(['auth', 'verified', 'access', 'laundry.selected'])->group(fun
     Route::view('/pos', 'pages.order.pos')->name('pos.index');
 
     Route::auto('/order', 'OrderController', ['name' => 'order']);
+
+    Route::get('/order/{id}/struk-pdf', [OrderController::class, 'getStrukPdf'])->name('order.strukpdf');
+    Route::get('/order/{id}/print', [OrderController::class, 'getPrint'])->name('order.print');
 
     Route::get('/native-bridge-test', function () {
         return view('pages.settings.native-bridge-test');

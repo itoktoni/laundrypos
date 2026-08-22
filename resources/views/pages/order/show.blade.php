@@ -16,11 +16,11 @@
                         </div>
                         <div>
                             <p class="text-on-surface-variant">Metode Pengambilan</p>
-                            <p>{{ $order->order_metode_pengambilan->getDescription() }}</p>
+                            <p>{{ $order->order_metode_pengambilan?->description }}</p>
                         </div>
                         <div>
                             <p class="text-on-surface-variant">Pembayaran</p>
-                            <p>{{ $order->order_metode_pembayaran->getDescription() }}</p>
+                            <p>{{ $order->order_metode_pembayaran?->description }}</p>
                         </div>
                         <div>
                             <p class="text-on-surface-variant">Estimasi Selesai</p>
