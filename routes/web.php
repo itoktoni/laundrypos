@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\LaundryController;
 use App\Http\Controllers\WebsiteSettingController;
 use App\Models\Notification;
 use App\Services\CentrifugoService;
@@ -27,7 +28,12 @@ Route::middleware('auth')->post('/centrifugo/token', function (Request $request)
     ]);
 });
 
-Route::middleware(['auth', 'verified', 'access'])->group(function () {
+Route::middleware(['auth'])->group(function () {
+    Route::get('/laundry/picker', [LaundryController::class, 'picker'])->name('laundry.picker');
+    Route::post('/laundry/select', [LaundryController::class, 'select'])->name('laundry.select');
+});
+
+Route::middleware(['auth', 'verified', 'access', 'laundry.selected'])->group(function () {
 
     Route::get('dashboard', DashboardController::class)->name('dashboard');
 

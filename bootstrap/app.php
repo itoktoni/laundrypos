@@ -28,6 +28,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'access' => AccessMiddleware::class,
             'verified' => VerifyVerified::class,
+            'laundry.selected' => \App\Http\Middleware\EnsureLaundrySelected::class,
             // 'skip_verified' => SkipVerifiedCheck::class,
         ]);
 

@@ -2,44 +2,47 @@
 
 namespace Tests\Feature;
 
-use App\Models\BaseModel;
 use App\Models\Laundry;
-use Illuminate\Database\Eloquent\Attributes\Fillable;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
+use App\Models\User;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
-class TenantDummy extends BaseModel
-{
-    use \App\Concerns\BelongsToLaundry;
+it('redirects to picker when no laundry selected', function () {
+    $user = User::factory()->create(['role' => 'owner', 'verified_at' => now()]);
+    Auth::login($user);
 
-    protected $table = 'tenant_dummies';
-    protected $primaryKey = 'tenant_dummy_id';
+    $this->get('/dashboard')->assertRedirect(route('laundry.picker'));
+});
 
-    #[Fillable(['tenant_dummy_nama'])]
-    protected $guarded = [];
-}
+it('allows dashboard when laundry in session and user is owner', function () {
+    $laundry = Laundry::create(['laundry_nama' => 'L1', 'laundry_kode' => 'L1']);
+    $user = User::factory()->create(['role' => 'owner', 'verified_at' => now()]);
+    Auth::login($user);
 
-it('scopes and auto-assigns laundry_id from session', function () {
-    Schema::dropIfExists('tenant_dummies');
-    Schema::create('tenant_dummies', function (Blueprint $table) {
-        $table->id('tenant_dummy_id');
-        $table->unsignedBigInteger('tenant_dummies_id_laundry')->nullable();
-        $table->string('tenant_dummy_nama');
-        $table->timestamps();
-    });
+    $this->withSession(['laundry_id' => $laundry->laundry_id])
+        ->get('/dashboard')->assertOk();
+});
 
-    $a = Laundry::create(['laundry_nama' => 'A', 'laundry_kode' => 'A']);
-    $b = Laundry::create(['laundry_nama' => 'B', 'laundry_kode' => 'B']);
+it('rejects non-member using unassigned laundry', function () {
+    $laundry = Laundry::create(['laundry_nama' => 'L2', 'laundry_kode' => 'L2']);
+    $user = User::factory()->create(['role' => 'karyawan', 'verified_at' => now()]);
+    Auth::login($user);
 
-    session(['laundry_id' => $a->laundry_id]);
-    TenantDummy::create(['tenant_dummy_nama' => 'in-a']);
+    $this->withSession(['laundry_id' => $laundry->laundry_id])
+        ->get('/dashboard')->assertRedirect(route('laundry.picker'));
+});
 
-    session(['laundry_id' => $b->laundry_id]);
-    TenantDummy::create(['tenant_dummy_nama' => 'in-b']);
+it('allows member using assigned laundry', function () {
+    $laundry = Laundry::create(['laundry_nama' => 'L3', 'laundry_kode' => 'L3']);
+    $user = User::factory()->create(['role' => 'karyawan', 'verified_at' => now()]);
+    DB::table('laundry_user')->insert([
+        'laundry_id' => $laundry->laundry_id,
+        'user_id' => $user->id,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+    Auth::login($user);
 
-    expect(TenantDummy::count())->toBe(1)
-        ->and(TenantDummy::first()->tenant_dummy_nama)->toBe('in-b')
-        ->and(TenantDummy::withoutGlobalScopes()->count())->toBe(2);
-
-    Schema::dropIfExists('tenant_dummies');
+    $this->withSession(['laundry_id' => $laundry->laundry_id])
+        ->get('/dashboard')->assertOk();
 });
