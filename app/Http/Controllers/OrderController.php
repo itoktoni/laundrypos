@@ -32,6 +32,12 @@ class OrderController extends Controller
         ]);
     }
 
+    public function getCreate(Request $request)
+    {
+        // Orders are created through the POS terminal.
+        return redirect()->route('pos.index');
+    }
+
     public function postTransit(Request $request, $id)
     {
         $order = $this->model->findOrFail($id);

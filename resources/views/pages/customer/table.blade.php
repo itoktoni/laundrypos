@@ -34,6 +34,10 @@
             </x-slot:body>
         </x-table>
 
-        {{ $data->links() }}
+        <x-pagination :paginator="$data" />
+        <x-action :model="$model" :action="['create', 'delete']"/>
     </div>
+
+    <input type="hidden" class="module" value="{{ Str::beforeLast(request()->route()->uri(), '/') }}">
+    <script src="/js/table.js"></script>
 </x-layouts::app>
