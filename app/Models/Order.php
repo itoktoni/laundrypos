@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Concerns\BelongsToLaundry;
 use App\Enums\MetodePembayaranEnum;
 use App\Enums\MetodePengambilanEnum;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -13,6 +14,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 ])]
 class Order extends BaseModel
 {
+    use BelongsToLaundry;
     protected $table = 'order';
 
     protected $primaryKey = 'order_id';
