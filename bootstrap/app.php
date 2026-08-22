@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\AccessMiddleware;
+use App\Http\Middleware\EnsureLaundrySelected;
 use App\Http\Middleware\VerifyVerified;
 use App\Providers\ModelAliasServiceProvider;
 use Ibex\CrudGenerator\CrudServiceProvider;
@@ -28,7 +29,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'access' => AccessMiddleware::class,
             'verified' => VerifyVerified::class,
-            'laundry.selected' => \App\Http\Middleware\EnsureLaundrySelected::class,
+            'laundry.selected' => EnsureLaundrySelected::class,
             // 'skip_verified' => SkipVerifiedCheck::class,
         ]);
 

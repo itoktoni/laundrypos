@@ -10,9 +10,11 @@ use Illuminate\Support\Facades\Schema;
 class Laundry extends BaseModel
 {
     protected $table = 'laundry';
+
     protected $primaryKey = 'laundry_id';
 
     public static $filterColumns = ['laundry_nama'];
+
     public static $sortColumns = ['laundry_nama'];
 
     public static function field_name(): string
