@@ -43,6 +43,8 @@ Route::middleware(['auth', 'verified', 'access', 'laundry.selected'])->group(fun
 
     Route::auto('/customer', 'CustomerController', ['name' => 'customer']);
 
+    Route::auto('/product', 'ProductController', ['name' => 'product']);
+
     Route::get('/native-bridge-test', function () {
         return view('pages.settings.native-bridge-test');
     })->name('native-bridge-test');
