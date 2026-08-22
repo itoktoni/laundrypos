@@ -50,6 +50,7 @@ Route::middleware(['auth', 'verified', 'access', 'laundry.selected'])->group(fun
 
     Route::auto('/order', 'OrderController', ['name' => 'order']);
 
+    Route::post('/order/{id}/transit', [OrderController::class, 'postTransit'])->name('order.transit');
     Route::get('/order/{id}/struk-pdf', [OrderController::class, 'getStrukPdf'])->name('order.strukpdf');
     Route::get('/order/{id}/print', [OrderController::class, 'getPrint'])->name('order.print');
 
