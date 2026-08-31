@@ -69,3 +69,9 @@ if ('serviceWorker' in navigator) {
             });
     });
 }
+
+import { initOfflineMode } from './offline/app.js';
+
+document.addEventListener('DOMContentLoaded', () => {
+    initOfflineMode().catch(console.error);
+});
