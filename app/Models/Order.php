@@ -10,9 +10,10 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 #[Fillable([
-    'order_code', 'order_id_customer', 'order_walkin_nama', 'order_walkin_telepon', 'order_id_user',
+    'order_id_laundry', 'order_code', 'order_id_customer', 'order_walkin_nama', 'order_walkin_telepon', 'order_id_user',
     'order_metode_pengambilan', 'order_alamat_jemput', 'order_slot_waktu', 'order_metode_pembayaran',
     'order_catatan', 'order_subtotal', 'order_total', 'order_status_id', 'order_estimasi_selesai',
+    'offline_uuid',
 ])]
 class Order extends BaseModel
 {
@@ -111,13 +112,16 @@ class Order extends BaseModel
             $currentIndex = $statuses->search(fn ($s) => $s->getKey() === $current?->getKey());
             $targetIndex = $statuses->search(fn ($s) => $s->getKey() === $to->getKey());
 
-            if ($currentIndex === false || $targetIndex !== $currentIndex + 1) {
+            $isForward = $targetIndex === $currentIndex + 1;
+            $isBack = $targetIndex === $currentIndex - 1;
+
+            if ($currentIndex === false || (! $isForward && ! $isBack)) {
                 $nextName = ($currentIndex !== false && isset($statuses[$currentIndex + 1]))
                     ? $statuses[$currentIndex + 1]->order_status_nama
                     : '-';
 
                 throw ValidationException::withMessages([
-                    'status' => ["Perpindahan status tidak valid. Status berikutnya yang diizinkan: {$nextName}"],
+                    'status' => ["Perpindahan status tidak valid. Yang diizinkan: maju ke {$nextName} atau kembali ke status sebelumnya."],
                 ]);
             }
         }
