@@ -15,8 +15,8 @@ export default defineConfig(() => {
             {
                 name: 'copy-sql-wasm',
                 buildStart() {
-                    const src = resolve('node_modules/sql.js/dist/sql-wasm.wasm');
-                    const dest = resolve('public/js/sql-wasm.wasm');
+                    const src = resolve('node_modules/sql.js/dist/sql-wasm-browser.wasm');
+                    const dest = resolve('public/js/sql-wasm-browser.wasm');
                     if (!existsSync(resolve('public/js'))) {
                         mkdirSync(resolve('public/js'), { recursive: true });
                     }
