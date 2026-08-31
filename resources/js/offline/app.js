@@ -1,4 +1,4 @@
-import { initDB } from './db.js';
+import { initDB, generateId } from './db.js';
 import { getProducts, searchProducts, getProductById } from './products.js';
 import { addToCart, updateCartQty, removeFromCart, getCart, getCartTotal, getCartCount, clearCart } from './cart.js';
 import { createOfflineOrder, getOfflineOrders, getPendingOrderCount, getOrderById } from './orders.js';
@@ -10,7 +10,7 @@ let onModeChange = null;
 export async function initOfflineMode() {
     await initDB();
 
-    const deviceId = localStorage.getItem('device_id') || crypto.randomUUID();
+    const deviceId = localStorage.getItem('device_id') || generateId();
     localStorage.setItem('device_id', deviceId);
 
     if (isOnline()) {

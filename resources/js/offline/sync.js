@@ -1,4 +1,4 @@
-import { query, run } from './db.js';
+import { query, run, generateId } from './db.js';
 import { upsertProducts, upsertCategories, upsertSatuan } from './products.js';
 import { getPendingOrders, markOrderSynced, markOrderConflict } from './orders.js';
 
@@ -23,7 +23,7 @@ export function setLastSyncTime(time) {
 export function getDeviceId() {
     let result = query("SELECT value FROM sync_meta WHERE key = 'device_id'");
     if (!result[0]?.value) {
-        const deviceId = crypto.randomUUID();
+        const deviceId = generateId();
         run(
             "INSERT OR REPLACE INTO sync_meta (key, value, updated_at) VALUES ('device_id', ?, ?)",
             [deviceId, new Date().toISOString()]
