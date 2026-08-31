@@ -19,14 +19,15 @@ class SyncController extends Controller
 {
     private function getLaundryId(): int
     {
-        return Auth::user()->laundry_id ?? Auth::user()->currentLaundry->laundry_id ?? 0;
+        return (int) session('laundry_id', 0);
     }
 
     public function pullProducts(): JsonResponse
     {
         $laundryId = $this->getLaundryId();
 
-        $products = Product::where('order_id_laundry', $laundryId)
+        $products = Product::withoutGlobalScope('laundry')
+            ->where('product_id_laundry', $laundryId)
             ->select([
                 'product_id', 'product_nama', 'product_harga_dasar',
                 'product_id_kategori', 'product_satuan', 'product_estimasi_jam',
@@ -58,7 +59,8 @@ class SyncController extends Controller
     {
         $laundryId = $this->getLaundryId();
 
-        $categories = Kategori::where('kategori_id_laundry', $laundryId)
+        $categories = Kategori::withoutGlobalScope('laundry')
+            ->where('kategori_id_laundry', $laundryId)
             ->select(['kategori_id', 'kategori_nama', 'updated_at'])
             ->get()
             ->map(function ($c) {
@@ -87,7 +89,8 @@ class SyncController extends Controller
     {
         $laundryId = $this->getLaundryId();
 
-        $customers = Customer::where('customer_id_laundry', $laundryId)
+        $customers = Customer::withoutGlobalScope('laundry')
+            ->where('customer_id_laundry', $laundryId)
             ->select(['customer_id', 'customer_nama', 'customer_telepon', 'customer_alamat', 'updated_at'])
             ->get();
 
@@ -96,11 +99,13 @@ class SyncController extends Controller
 
     public function syncStatus(): JsonResponse
     {
-        $user = Auth::user();
+        $laundryId = $this->getLaundryId();
 
         return response()->json([
             'last_sync_at' => now()->toIso8601String(),
-            'sync_version' => Product::where('order_id_laundry', $user->laundry_id ?? 0)->max('product_id'),
+            'sync_version' => Product::withoutGlobalScope('laundry')
+                ->where('product_id_laundry', $laundryId)
+                ->max('product_id'),
             'server_time' => now()->toIso8601String(),
         ]);
     }
@@ -108,14 +113,15 @@ class SyncController extends Controller
     public function pushOrders(SyncOrdersRequest $request): JsonResponse
     {
         $user = Auth::user();
-        $laundryId = $user->laundry_id ?? $user->currentLaundry?->laundry_id ?? 0;
+        $laundryId = $this->getLaundryId();
 
         if (! $laundryId) {
             return response()->json(['error' => 'No laundry context'], 400);
         }
 
         // Get default "Menunggu Konfirmasi" status for this laundry
-        $defaultStatus = OrderStatus::where('order_id_laundry', $laundryId)
+        $defaultStatus = OrderStatus::withoutGlobalScope('laundry')
+            ->where('order_id_laundry', $laundryId)
             ->orderBy('order_status_urutan')
             ->first();
 
@@ -130,7 +136,9 @@ class SyncController extends Controller
         foreach ($request->orders as $orderData) {
             try {
                 // UUID dedup check
-                $existing = Order::where('offline_uuid', $orderData['id'])->first();
+                $existing = Order::withoutGlobalScope('laundry')
+                    ->where('offline_uuid', $orderData['id'])
+                    ->first();
                 if ($existing) {
                     $synced[] = [
                         'client_id' => $orderData['id'],
@@ -171,7 +179,8 @@ class SyncController extends Controller
 
                 // Create order items
                 foreach ($orderData['items'] as $item) {
-                    $product = Product::find($item['product_id']);
+                    $product = Product::withoutGlobalScope('laundry')
+                        ->find($item['product_id']);
                     $satuan = $product?->product_satuan ?? 'item';
 
                     OrderItem::create([
