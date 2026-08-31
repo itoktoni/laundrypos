@@ -1,5 +1,9 @@
 import { query, run } from './db.js';
 
+function safe(v) {
+    return v === undefined ? null : v;
+}
+
 export function getProducts(categoryId = null) {
     let sql = 'SELECT * FROM products';
     const params = [];
@@ -39,8 +43,8 @@ export function upsertProducts(products) {
              product_id_satuan, product_id_kategori, product_foto, updated_at, sync_status)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'synced')`,
             [
-                p.product_id, p.product_nama, p.product_harga_jual, p.product_stok,
-                p.product_id_satuan, p.product_id_kategori, p.product_foto, p.updated_at,
+                safe(p.product_id), safe(p.product_nama), safe(p.product_harga_jual), safe(p.product_stok),
+                safe(p.product_id_satuan), safe(p.product_id_kategori), safe(p.product_foto), safe(p.updated_at),
             ]
         );
     }
@@ -51,7 +55,7 @@ export function upsertCategories(categories) {
     for (const c of categories) {
         run(
             'INSERT INTO categories (id, name, updated_at) VALUES (?, ?, ?)',
-            [c.id, c.name, c.updated_at]
+            [safe(c.id), safe(c.name), safe(c.updated_at)]
         );
     }
 }
@@ -61,7 +65,7 @@ export function upsertSatuan(satuanList) {
     for (const s of satuanList) {
         run(
             'INSERT INTO satuan (id, name, updated_at) VALUES (?, ?, ?)',
-            [s.id, s.name, s.updated_at]
+            [safe(s.id), safe(s.name), safe(s.updated_at)]
         );
     }
 }
