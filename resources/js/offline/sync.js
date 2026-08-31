@@ -33,23 +33,21 @@ export function getDeviceId() {
     return result[0].value;
 }
 
-function getAuthToken() {
-    return localStorage.getItem('auth_token') || document.querySelector('meta[name="csrf-token"]')?.content;
+function getCsrfToken() {
+    return document.querySelector('meta[name="csrf-token"]')?.content;
 }
 
 async function apiRequest(path, options = {}) {
-    const token = getAuthToken();
     const headers = {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRF-TOKEN': getCsrfToken(),
         ...options.headers,
     };
 
-    if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-    }
-
     const response = await fetch(`${API_BASE}${path}`, {
+        credentials: 'same-origin',
         ...options,
         headers,
     });
