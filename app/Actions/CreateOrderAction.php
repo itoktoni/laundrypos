@@ -79,7 +79,9 @@ class CreateOrderAction
                     'order_metode_pembayaran' => $data['metode_pembayaran'],
                     'order_catatan' => $data['catatan'] ?? null,
                     'order_subtotal' => max(0.01, round($subtotal, 2)),
-                    'order_total' => max(0.01, round($subtotal, 2)),
+                    'order_id_discount' => $data['discount_id'] ?? null,
+                    'order_diskon' => round($data['diskon'] ?? 0, 2),
+                    'order_total' => max(0.01, round($subtotal - ($data['diskon'] ?? 0), 2)),
                     'order_status_id' => $initialStatus->getKey(),
                     'order_estimasi_selesai' => now()->addHours(max(1, $estimasiJam)),
                 ]);

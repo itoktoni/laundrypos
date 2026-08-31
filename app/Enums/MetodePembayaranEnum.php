@@ -10,7 +10,9 @@ final class MetodePembayaranEnum extends Enum
     use EnumTrait;
 
     const TUNAI = 'tunai';
+
     const TRANSFER = 'transfer';
+
     const DOMPET_DIGITAL = 'dompet_digital';
 
     public static function getDescription(mixed $value): string

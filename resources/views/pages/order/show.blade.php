@@ -5,6 +5,7 @@
         $isBatal = $currentStatus?->order_status_is_batal ?? false;
         $currentIndex = $statuses->search(fn ($s) => $s->getKey() === $currentStatus?->getKey());
         $nextStatus = (! $isBatal && $currentIndex !== false && isset($statuses[$currentIndex + 1])) ? $statuses[$currentIndex + 1] : null;
+        $prevStatus = (! $isBatal && $currentIndex !== false && $currentIndex > 0 && ! $statuses[$currentIndex - 1]->order_status_is_batal) ? $statuses[$currentIndex - 1] : null;
         $cancelStatus = $statuses->firstWhere('order_status_is_batal', true);
         $warna = $currentStatus?->order_status_warna ?? '#2563eb';
         $customerNama = $order->hasCustomer?->customer_nama ?? ($order->order_walkin_nama.' · Walk-in');
@@ -44,16 +45,36 @@
                 @foreach ($statuses->where('order_status_is_batal', false) as $step)
                     @php($stepIndex = $statuses->search($step))
                     @php($state = $stepIndex < $currentIndex ? 'done' : ($stepIndex === $currentIndex ? 'now' : 'todo'))
-                    <li class="flex items-center gap-2 rounded-lg px-3 py-2 text-xs
-                        {{ $state === 'now' ? 'bg-primary text-on-primary font-semibold'
-                            : ($state === 'done' ? 'bg-primary/10 text-primary' : 'border border-outline-variant text-on-surface-variant') }}">
-                        <span class="w-5 h-5 rounded-full grid place-items-center text-[10px] font-bold shrink-0
-                            {{ $state === 'now' ? 'bg-on-primary/20'
-                                : ($state === 'done' ? 'bg-primary/15' : 'border border-outline-variant') }}">
-                            @if ($state === 'done') ✓@else {{ $loop->index + 1 }} @endif
-                        </span>
-                        <span class="leading-tight">{{ $step->order_status_nama }}</span>
-                    </li>
+                    @php($isNext = $stepIndex === $currentIndex + 1)
+                    @php($isPrev = $stepIndex === $currentIndex - 1 && $prevStatus)
+                    @if ($isNext || $isPrev)
+                        <form method="POST" action="{{ route('order.transit', ['id' => $order->order_id]) }}" class="contents">
+                            @csrf
+                            <input type="hidden" name="order_status_id" value="{{ $step->getKey() }}">
+                            <li class="flex items-center gap-2 rounded-lg px-3 py-2 text-xs cursor-pointer transition hover:ring-2
+                                {{ $isPrev ? 'hover:ring-warning/40' : 'hover:ring-primary/40' }}
+                                {{ $state === 'now' ? 'bg-primary text-on-primary font-semibold'
+                                    : ($state === 'done' ? 'bg-primary/10 text-primary' : 'border border-outline-variant text-on-surface-variant hover:bg-primary/5') }}">
+                                <span class="w-5 h-5 rounded-full grid place-items-center text-[10px] font-bold shrink-0
+                                    {{ $state === 'now' ? 'bg-on-primary/20'
+                                        : ($state === 'done' ? 'bg-primary/15' : 'border border-outline-variant') }}">
+                                    @if ($state === 'done') ✓@else {{ $loop->index + 1 }} @endif
+                                </span>
+                                <span class="leading-tight">{{ $step->order_status_nama }}</span>
+                            </li>
+                        </form>
+                    @else
+                        <li class="flex items-center gap-2 rounded-lg px-3 py-2 text-xs
+                            {{ $state === 'now' ? 'bg-primary text-on-primary font-semibold'
+                                : ($state === 'done' ? 'bg-primary/10 text-primary' : 'border border-outline-variant text-on-surface-variant') }}">
+                            <span class="w-5 h-5 rounded-full grid place-items-center text-[10px] font-bold shrink-0
+                                {{ $state === 'now' ? 'bg-on-primary/20'
+                                    : ($state === 'done' ? 'bg-primary/15' : 'border border-outline-variant') }}">
+                                @if ($state === 'done') ✓@else {{ $loop->index + 1 }} @endif
+                            </span>
+                            <span class="leading-tight">{{ $step->order_status_nama }}</span>
+                        </li>
+                    @endif
                 @endforeach
             </ol>
 
@@ -62,17 +83,37 @@
                 @foreach ($statuses->where('order_status_is_batal', false) as $step)
                     @php($stepIndex = $statuses->search($step))
                     @php($state = $stepIndex < $currentIndex ? 'done' : ($stepIndex === $currentIndex ? 'now' : 'todo'))
+                    @php($isNext = $stepIndex === $currentIndex + 1)
+                    @php($isPrev = $stepIndex === $currentIndex - 1 && $prevStatus)
                     <li class="flex items-center shrink-0 {{ ! $loop->last ? 'flex-1 min-w-[96px]' : '' }}">
-                        <div class="flex flex-col items-center text-center gap-1.5 px-1">
-                            <span class="w-7 h-7 rounded-full grid place-items-center text-xs font-bold
-                                {{ $state === 'now' ? 'bg-primary text-on-primary ring-4 ring-primary/20'
-                                    : ($state === 'done' ? 'bg-primary/15 text-primary' : 'border border-outline-variant text-on-surface-variant') }}">
-                                @if ($state === 'done') ✓@else {{ $loop->index + 1 }} @endif
-                            </span>
-                            <span class="text-[11px] leading-tight max-w-[96px] {{ $state === 'now' ? 'font-semibold' : 'text-on-surface-variant' }}">
-                                {{ $step->order_status_nama }}
-                            </span>
-                        </div>
+                        @if ($isNext || $isPrev)
+                            <form method="POST" action="{{ route('order.transit', ['id' => $order->order_id]) }}" class="contents">
+                                @csrf
+                                <input type="hidden" name="order_status_id" value="{{ $step->getKey() }}">
+                                <button type="submit" class="flex flex-col items-center text-center gap-1.5 px-1 cursor-pointer group">
+                                    <span class="w-7 h-7 rounded-full grid place-items-center text-xs font-bold transition group-hover:ring-2
+                                        {{ $isPrev ? 'group-hover:ring-warning/40' : 'group-hover:ring-primary/40' }}
+                                        {{ $state === 'now' ? 'bg-primary text-on-primary ring-4 ring-primary/20'
+                                            : ($state === 'done' ? 'bg-primary/15 text-primary' : 'border border-outline-variant text-on-surface-variant group-hover:bg-primary/5 group-hover:border-primary') }}">
+                                        @if ($state === 'done') ✓@else {{ $loop->index + 1 }} @endif
+                                    </span>
+                                    <span class="text-[11px] leading-tight max-w-[96px] {{ $state === 'now' ? 'font-semibold' : 'text-on-surface-variant group-hover:text-primary' }}">
+                                        {{ $step->order_status_nama }}
+                                    </span>
+                                </button>
+                            </form>
+                        @else
+                            <div class="flex flex-col items-center text-center gap-1.5 px-1">
+                                <span class="w-7 h-7 rounded-full grid place-items-center text-xs font-bold
+                                    {{ $state === 'now' ? 'bg-primary text-on-primary ring-4 ring-primary/20'
+                                        : ($state === 'done' ? 'bg-primary/15 text-primary' : 'border border-outline-variant text-on-surface-variant') }}">
+                                    @if ($state === 'done') ✓@else {{ $loop->index + 1 }} @endif
+                                </span>
+                                <span class="text-[11px] leading-tight max-w-[96px] {{ $state === 'now' ? 'font-semibold' : 'text-on-surface-variant' }}">
+                                    {{ $step->order_status_nama }}
+                                </span>
+                            </div>
+                        @endif
                         @if (! $loop->last)
                             <div class="h-px flex-1 mx-1 mb-5 {{ $stepIndex < $currentIndex ? 'bg-primary/40' : 'bg-outline-variant' }}"></div>
                         @endif
@@ -166,24 +207,36 @@
 
             {{-- Side: status action + chronology --}}
             <div class="space-y-6 print:hidden">
-                @if ($nextStatus || $cancelStatus)
+                @if ($nextStatus || $prevStatus || $cancelStatus)
                     <section aria-label="Perbarui status" class="rounded-xl border border-outline-variant p-4">
                         <h2 class="font-semibold text-sm mb-3">Perbarui Status</h2>
-                        <form method="POST" action="{{ route('order.transit', ['id' => $order->order_id]) }}" class="space-y-3">
-                            @csrf
+                        <div class="space-y-2">
                             @if ($nextStatus)
-                                <input type="hidden" name="order_status_id" value="{{ $nextStatus->getKey() }}">
-                                <button type="submit" class="btn btn-primary w-full">
-                                    Tandai "{{ $nextStatus->order_status_nama }}"
-                                </button>
+                                <form method="POST" action="{{ route('order.transit', ['id' => $order->order_id]) }}">
+                                    @csrf
+                                    <input type="hidden" name="order_status_id" value="{{ $nextStatus->getKey() }}">
+                                    <button type="submit" class="btn btn-primary w-full">
+                                        Tandai "{{ $nextStatus->order_status_nama }}"
+                                    </button>
+                                </form>
                             @endif
 
-                            @if ($cancelStatus && ! $nextStatus)
+                            @if ($prevStatus)
+                                <form method="POST" action="{{ route('order.transit', ['id' => $order->order_id]) }}">
+                                    @csrf
+                                    <input type="hidden" name="order_status_id" value="{{ $prevStatus->getKey() }}">
+                                    <button type="submit" class="btn btn-outline btn-warning w-full">
+                                        Kembali ke "{{ $prevStatus->order_status_nama }}"
+                                    </button>
+                                </form>
+                            @endif
+
+                            @if ($cancelStatus && ! $nextStatus && ! $prevStatus)
                                 <p class="text-xs text-on-surface-variant">Order sudah di tahap akhir alur.</p>
                             @endif
-                        </form>
+                        </div>
 
-                        @if ($cancelStatus && $nextStatus)
+                        @if ($cancelStatus && ($nextStatus || $prevStatus))
                             <details class="mt-2">
                                 <summary class="text-xs text-error cursor-pointer select-none">Batalkan order…</summary>
                                 <form method="POST" action="{{ route('order.transit', ['id' => $order->order_id]) }}" class="mt-2 space-y-2">

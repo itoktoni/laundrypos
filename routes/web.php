@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\CrmController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LaundryController;
 use App\Http\Controllers\OrderController;
@@ -38,6 +39,8 @@ Route::middleware(['auth', 'verified', 'access', 'laundry.selected'])->group(fun
 
     Route::get('dashboard', DashboardController::class)->name('dashboard');
 
+    Route::get('/crm', CrmController::class)->name('crm.dashboard');
+
     Route::auto('/user', 'UsersController', ['name' => 'user']);
 
     Route::auto('/kategori', 'KategoriController', ['name' => 'kategori']);
@@ -46,9 +49,15 @@ Route::middleware(['auth', 'verified', 'access', 'laundry.selected'])->group(fun
 
     Route::auto('/product', 'ProductController', ['name' => 'product']);
 
+    Route::auto('/discount', 'DiscountController', ['name' => 'discount']);
+
+    Route::auto('/order-status', 'OrderStatusController', ['name' => 'order-status']);
+
     Route::view('/pos', 'pages.order.pos')->name('pos.index');
 
     Route::auto('/order', 'OrderController', ['name' => 'order']);
+
+    Route::auto('/expense', 'ExpenseController', ['name' => 'expense']);
 
     Route::post('/order/{id}/transit', [OrderController::class, 'postTransit'])->name('order.transit');
     Route::get('/order/{id}/struk-pdf', [OrderController::class, 'getStrukPdf'])->name('order.strukpdf');

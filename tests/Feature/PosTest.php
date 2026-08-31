@@ -49,12 +49,11 @@ it('clamps qty between 1 and 999 and removes lines', function () {
         ->assertSet('cart', []);
 });
 
-it('confirms walk-in order via POS and redirects to struk', function () {
+it('confirms walk-in order via POS and shows QR modal', function () {
     [$user, $product] = posFixture();
 
     $test = Livewire::actingAs($user)
         ->test(PosTerminal::class)
-        ->set('walkinMode', true)
         ->set('walkinNama', 'Budi')
         ->set('walkinTelepon', '081234567890')
         ->call('addToCart', $product->getKey())
@@ -62,5 +61,8 @@ it('confirms walk-in order via POS and redirects to struk', function () {
 
     $order = Order::latest('order_id')->first();
 
-    $test->assertRedirect(route('order.getShow', ['id' => $order->getKey()]));
+    $test->assertSet('showQr', true)
+        ->assertSet('qrOrderId', (string) $order->getKey())
+        ->assertSet('qrOrderCode', $order->order_code)
+        ->assertSet('qrTotal', (float) $order->order_total);
 });

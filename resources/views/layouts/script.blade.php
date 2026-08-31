@@ -114,7 +114,7 @@
         if (!container) {
             container = document.createElement('div');
             container.id = 'toast-container';
-            container.className = 'fixed bottom-4 right-4 z-50 space-y-2 w-80';
+            container.className = 'fixed top-20 right-4 z-50 space-y-2 w-80';
             document.body.appendChild(container);
         }
 

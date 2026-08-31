@@ -10,7 +10,9 @@ final class SatuanEnum extends Enum
     use EnumTrait;
 
     const KG = 'kg';
+
     const ITEM = 'item';
+
     const PASANG = 'pasang';
 
     public static function getDescription(mixed $value): string

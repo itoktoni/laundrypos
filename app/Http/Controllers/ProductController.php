@@ -19,6 +19,7 @@ class ProductController extends Controller
     protected function share($data = [])
     {
         return array_merge([
+            'model' => $this->model,
             'kategoriOptions' => Kategori::orderBy('kategori_nama')->get()->pluck('kategori_nama', 'kategori_id')->all(),
             'satuanOptions' => SatuanEnum::getOptions(),
         ], $data);

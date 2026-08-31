@@ -13,6 +13,17 @@ class LaundryController extends Controller
     {
         $role = Auth::user()->role ?? '';
 
+        // Owner: auto-select first active laundry, skip picker.
+        if ($role === 'owner') {
+            $laundry = Laundry::where('laundry_is_aktif', true)->first();
+
+            if ($laundry) {
+                session(['laundry_id' => $laundry->laundry_id]);
+
+                return redirect()->route('dashboard');
+            }
+        }
+
         $laundries = $role === 'owner'
             ? Laundry::where('laundry_is_aktif', true)->orderBy('laundry_nama')->get()
             : Laundry::whereIn('laundry_id', $this->pivotIds())->orderBy('laundry_nama')->get();

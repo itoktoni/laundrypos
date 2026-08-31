@@ -19,9 +19,17 @@ class EnsureLaundrySelected
             return redirect()->route('login');
         }
 
-        // Owner has access to every laundry.
+        // Owner has 1 laundry — auto-select, no picker.
         if (($user->role ?? '') === 'owner') {
             if (! $laundryId || ! Laundry::find($laundryId)) {
+                $laundry = Laundry::where('laundry_is_aktif', true)->first();
+
+                if ($laundry) {
+                    session(['laundry_id' => $laundry->laundry_id]);
+
+                    return $next($request);
+                }
+
                 return redirect()->route('laundry.picker');
             }
 

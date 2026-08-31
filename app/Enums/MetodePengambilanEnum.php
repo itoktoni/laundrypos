@@ -10,6 +10,7 @@ final class MetodePengambilanEnum extends Enum
     use EnumTrait;
 
     const ANTAR_TOKO = 'antar_toko';
+
     const JEMPUT = 'jemput';
 
     public static function getDescription(mixed $value): string

@@ -2,17 +2,18 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\SatuanEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SyncOrdersRequest;
+use App\Models\Customer;
+use App\Models\Kategori;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderStatus;
 use App\Models\Product;
-use App\Models\Kategori;
-use App\Enums\SatuanEnum;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class SyncController extends Controller
 {
@@ -86,7 +87,7 @@ class SyncController extends Controller
     {
         $laundryId = $this->getLaundryId();
 
-        $customers = \App\Models\Customer::where('customer_id_laundry', $laundryId)
+        $customers = Customer::where('customer_id_laundry', $laundryId)
             ->select(['customer_id', 'customer_nama', 'customer_telepon', 'customer_alamat', 'updated_at'])
             ->get();
 
@@ -109,7 +110,7 @@ class SyncController extends Controller
         $user = Auth::user();
         $laundryId = $user->laundry_id ?? $user->currentLaundry?->laundry_id ?? 0;
 
-        if (!$laundryId) {
+        if (! $laundryId) {
             return response()->json(['error' => 'No laundry context'], 400);
         }
 
@@ -118,7 +119,7 @@ class SyncController extends Controller
             ->orderBy('order_status_urutan')
             ->first();
 
-        if (!$defaultStatus) {
+        if (! $defaultStatus) {
             return response()->json(['error' => 'No order status configured'], 500);
         }
 
@@ -136,13 +137,14 @@ class SyncController extends Controller
                         'server_order_id' => $existing->order_id,
                         'status' => 'already_synced',
                     ];
+
                     continue;
                 }
 
                 DB::beginTransaction();
 
                 // Generate order code
-                $order = new Order();
+                $order = new Order;
                 $orderCode = $order->generateCode();
 
                 // Calculate subtotal and total

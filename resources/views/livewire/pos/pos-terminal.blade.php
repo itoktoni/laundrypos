@@ -1,9 +1,27 @@
-<?php /** @var \App\Livewire\Pos\PosTerminal $this */ ?>
+<?php
+use App\Livewire\Pos\PosTerminal;
 
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+/** @var PosTerminal $this */ ?>
+
+<div class="flex flex-col gap-4">
+    {{-- Top bar: customer selector --}}
+    <div class="flex items-center gap-3">
+        <div class="flex-1 max-w-sm">
+            <label class="text-xs text-on-surface-variant mb-1 block">Pelanggan</label>
+            <select wire:model.live="customerId" class="select select-sm w-full">
+                <option value="">Walk-in</option>
+                @foreach ($customers as $customer)
+                    <option value="{{ $customer->customer_id }}">{{ $customer->customer_nama }}</option>
+                @endforeach
+            </select>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
     {{-- Left panel: kategori tabs + product grid --}}
-    <div class="lg:col-span-2">
-        <div class="flex gap-2 mb-3 overflow-x-auto pb-1">
+    <div class="lg:col-span-2 flex flex-col min-h-0">
+        {{-- Kategori tabs --}}
+        <div class="flex gap-2 mb-3 overflow-x-auto pb-2 shrink-0">
             <button wire:click="$set('activeKategoriId', null)"
                     class="btn btn-sm {{ $activeKategoriId === null ? 'btn-primary' : 'btn-soft' }}">Semua</button>
             @foreach ($kategoris as $kategori)
@@ -14,16 +32,17 @@
             @endforeach
         </div>
 
+        {{-- Search --}}
         <input type="text" wire:model.live.debounce.300ms="search" placeholder="Cari produk..."
-               class="input w-full mb-4" />
+               class="input w-full mb-4 shrink-0" />
 
-        <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
+        {{-- Product grid — scrollable --}}
+        <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2 overflow-y-auto max-h-[calc(100vh-20rem)] pb-20 md:pb-4">
             @forelse ($products as $product)
                 <button type="button" wire:click="addToCart({{ $product->product_id }})"
-                        class="border border-outline-variant rounded-xl p-4 text-left bg-surface-container-lowest hover:bg-surface-container transition shadow-sm">
-                    <p class="font-semibold text-sm truncate">{{ $product->product_nama }}</p>
-                    <p class="text-primary font-bold mt-2">{{ formatAngka($product->product_harga_dasar) }}</p>
-                    <p class="text-xs text-on-surface-variant">{{ $product->product_satuan?->description ?? $product->product_satuan }}</p>
+                        class="border border-outline-variant rounded-lg px-3 py-2 text-left bg-surface-container-lowest hover:bg-surface-container transition shadow-sm">
+                    <p class="text-sm font-medium truncate">{{ $product->product_nama }}</p>
+                    <p class="text-xs text-primary font-bold">{{ formatAngka($product->product_harga_dasar) }} / {{ $product->product_satuan?->description ?? $product->product_satuan }}</p>
                 </button>
             @empty
                 <p class="col-span-full text-sm text-on-surface-variant">Tidak ada produk ditemukan.</p>
@@ -66,42 +85,119 @@
             @endforelse
         </div>
 
-        {{-- Customer --}}
-        <div class="space-y-2 mb-4">
-            @if (! $walkinMode)
-                <label class="text-xs text-on-surface-variant">Pelanggan</label>
-                <select wire:model="customerId" class="select w-full">
-                    <option value="">-- Pilih pelanggan / Walk-in --</option>
-                    @foreach ($customerOptions as $id => $nama)
-                        <option value="{{ $id }}">{{ $nama }}</option>
-                    @endforeach
-                </select>
-                <label class="flex items-center gap-2 text-sm cursor-pointer">
-                    <input type="checkbox" wire:model="walkinMode" class="checkbox checkbox-sm"> Pelanggan Walk-in
-                </label>
+        {{-- Promo --}}
+        <div class="mb-4">
+            <label class="text-xs text-on-surface-variant mb-1 block">Promo</label>
+            @if ($discountId)
+                <div class="flex items-center gap-2">
+                    <span class="btn btn-sm btn-success gap-1">
+                        <span class="material-symbols-outlined text-sm">sell</span>
+                        {{ $discountNama }}
+                    </span>
+                    <button type="button" wire:click="removePromo" class="text-error text-xs">Hapus</button>
+                </div>
             @else
-                <label class="text-xs text-on-surface-variant">Walk-in</label>
-                <input type="text" wire:model="walkinNama" placeholder="Nama" class="input w-full" />
-                <input type="text" wire:model="walkinTelepon" placeholder="Telepon" class="input w-full" />
-                <label class="flex items-start gap-2 text-xs cursor-pointer">
-                    <input type="checkbox" wire:model="saveWalkinAsCustomer" class="checkbox checkbox-sm mt-0.5">
-                    <span>Simpan sebagai pelanggan</span>
-                </label>
-                <label class="flex items-center gap-2 text-sm cursor-pointer">
-                    <input type="checkbox" wire:model="walkinMode" class="checkbox checkbox-sm"> Pilih pelanggan terdaftar
-                </label>
+                <div class="flex gap-2">
+                    <div class="relative flex-1">
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-on-surface-variant text-[18px]">sell</span>
+                        <input type="text" wire:model="promoKode" wire:keydown.enter="applyPromo"
+                               placeholder="Kode promo..."
+                               class="input input-sm !pl-11 w-full" />
+                    </div>
+                    <button type="button" wire:click="applyPromo" class="btn btn-sm btn-primary">Pakai</button>
+                </div>
+                @if (! empty($suggestedPromos))
+                    <div class="flex flex-wrap gap-1 mt-2">
+                        @foreach ($suggestedPromos as $promo)
+                            <button type="button" wire:click="$set('promoKode', '{{ $promo->discount_kode }}'); applyPromo()"
+                                    class="text-[10px] px-2 py-0.5 border border-outline-variant rounded-full hover:bg-surface-container transition">
+                                {{ $promo->discount_kode }}
+                            </button>
+                        @endforeach
+                    </div>
+                @endif
             @endif
         </div>
 
         {{-- Totals --}}
         <div class="border-t border-outline-variant pt-3 space-y-1 text-sm">
-            <div class="flex justify-between"><span>Subtotal</span><span class="font-bold">{{ formatAngka($this->subtotal) }}</span></div>
-            <div class="flex justify-between text-on-surface-variant"><span>Estimasi selesai</span><span>{{ $this->estimasiJam }} jam</span></div>
+            <div class="flex justify-between"><span>Subtotal</span><span>{{ formatAngka($this->subtotal) }}</span></div>
+            @if ($discountAmount > 0)
+                <div class="flex justify-between text-success"><span>Diskon ({{ $discountNama }})</span><span>-{{ formatAngka($discountAmount) }}</span></div>
+            @endif
+            <div class="flex justify-between font-bold text-base pt-1"><span>Total</span><span>{{ formatAngka($this->total) }}</span></div>
         </div>
 
-        <button type="button" wire:click="confirmOrder" wire:loading.attr="disabled"
-                class="btn btn-primary w-full mt-4" @disabled(count($cart) === 0)>
-            Konfirmasi Order
-        </button>
+        {{-- Action buttons --}}
+        <div class="flex gap-2 mt-4">
+            <button type="button" wire:click="confirmOrder" wire:loading.attr="disabled"
+                    class="btn btn-primary flex-1" @disabled(count($cart) === 0)>
+                Bayar
+            </button>
+        </div>
     </div>
+</div>
+
+{{-- QRIS Modal --}}
+@if ($showQr)
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" wire:click.self="closeQr"
+     wire:poll.{{ config('app.qris_poll_interval', 2000) }}ms="pollQrStatus"
+     wire:poll.1s="decrementTimer">
+    <div class="bg-surface-container-lowest rounded-2xl shadow-2xl p-6 w-full max-w-sm mx-4 text-center">
+
+        @if ($qrPaid)
+            {{-- PAID SUCCESS --}}
+            <div class="flex flex-col items-center gap-3 py-4" x-data x-init="$nextTick(() => { setTimeout(() => $wire.closeQr(), {{ config('app.qris_paid_display', 3000) }}) })">
+                <div class="w-20 h-20 rounded-full bg-success-container flex items-center justify-center">
+                    <span class="material-symbols-outlined text-[48px] text-on-success-container">check_circle</span>
+                </div>
+                <h3 class="text-lg font-bold text-on-surface">Pembayaran Berhasil</h3>
+                <p class="text-sm text-on-surface-variant">{{ $qrOrderCode }}</p>
+                <p class="text-xl font-bold text-success">{{ formatAngka($qrTotal + $qrSuffix) }}</p>
+            </div>
+        @else
+            {{-- QR CODE --}}
+            <h3 class="text-lg font-bold mb-1">QRIS Pembayaran</h3>
+            <p class="text-sm text-on-surface-variant mb-1">{{ $qrOrderCode }}</p>
+            <p class="text-2xl font-bold text-primary mb-3">Rp {{ formatAngka($qrTotal + $qrSuffix) }}</p>
+
+                <div class="flex justify-center mb-3">
+                    @if($qrDataUri)
+                        <img src="{{ $qrDataUri }}" alt="QRIS" class="w-52 h-52">
+                    @else
+                        <div class="w-52 h-52 flex items-center justify-center text-sm text-gray-400">Memuat QR...</div>
+                    @endif
+                </div>
+
+            {{-- Timer --}}
+            @php $minutes = intdiv($qrTimeLeft, 60); $seconds = $qrTimeLeft % 60; @endphp
+            @if ($qrTimeLeft > 0)
+                <div class="flex items-center justify-center gap-2 mb-3">
+                    <span class="material-symbols-outlined text-[18px] text-on-surface-variant">schedule</span>
+                    <span class="text-sm font-mono text-on-surface-variant">{{ sprintf('%02d:%02d', $minutes, $seconds) }}</span>
+                </div>
+            @else
+                <p class="text-sm text-error font-medium mb-3">QRIS kedaluwarsa</p>
+            @endif
+
+            {{-- Polling indicator --}}
+            <div class="flex items-center justify-center gap-1.5 mb-4">
+                <span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+                <span class="text-xs text-on-surface-variant">Menunggu pembayaran...</span>
+            </div>
+
+            <div class="flex gap-2">
+                <a href="{{ route('order.getShow', ['id' => $qrOrderId]) }}" wire:navigate
+                   class="btn btn-outline flex-1">
+                    Lihat Order
+                </a>
+                <button type="button" wire:click="closeQr" class="btn btn-primary flex-1">
+                    Selesai
+                </button>
+            </div>
+        @endif
+
+    </div>
+</div>
+@endif
 </div>

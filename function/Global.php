@@ -2,6 +2,9 @@
 
 use App\Flasher\Flash;
 use Carbon\CarbonImmutable;
+use chillerlan\QRCode\Output\QRGdImagePNG;
+use chillerlan\QRCode\QRCode;
+use chillerlan\QRCode\QROptions;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
@@ -143,7 +146,7 @@ function moduleRoute($action = null, $params = [])
 
 function nominalQRIS($qris_data, $amount)
 {
-    $amountStr = number_format($amount, 2, '.', '');
+    $amountStr = (string) (int) round($amount);
     $amountLength = strlen($amountStr);
     $amountField = '54'.str_pad($amountLength, 2, '0', STR_PAD_LEFT).$amountStr;
 
@@ -200,6 +203,24 @@ function crc16($data)
     }
 
     return $crc;
+}
+
+function qrCodeDataUri(string $text, int $scale = 5, int $margin = 1): string
+{
+    if ($text === '') {
+        return '';
+    }
+
+    $options = new QROptions([
+        'scale' => $scale,
+        'outputInterface' => QRGdImagePNG::class,
+        'quietzoneSize' => $margin,
+        'bgColor' => [255, 255, 255],
+    ]);
+
+    $dataUri = (new QRCode($options))->render($text);
+
+    return $dataUri;
 }
 
 function showSql($query = null): string

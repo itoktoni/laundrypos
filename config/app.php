@@ -134,4 +134,9 @@ return [
         'QR' => DNS2DFacade::class,
     ])->toArray(),
 
+    'qris_data' => env('QRIS', ''),
+    'qris_poll_interval' => (int) env('QRIS_POLL_INTERVAL', 2000),
+    'qris_timeout' => (int) env('QRIS_TIMEOUT', 300),
+    'qris_paid_display' => (int) env('QRIS_PAID_DISPLAY', 3000),
+
 ];

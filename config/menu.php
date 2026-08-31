@@ -22,19 +22,23 @@ return [
             ],
         ],
         [
-            'label' => 'Master Data',
-            'items' => [
-                ['route' => 'user.getTable', 'icon' => 'manage_accounts', 'label' => 'Users', 'match' => ['user.*']],
-            ],
-        ],
-        [
             'label' => 'Laundry',
             'items' => [
                 ['route' => 'pos.index', 'icon' => 'point_of_sale', 'label' => 'POS Kasir'],
                 ['route' => 'order.getTable', 'icon' => 'receipt_long', 'label' => 'Orders', 'match' => ['order.*']],
-                ['route' => 'customer.getTable', 'icon' => 'people', 'label' => 'Customers', 'match' => ['customer.*']],
-                ['route' => 'kategori.getTable', 'icon' => 'category', 'label' => 'Kategori', 'match' => ['kategori.*']],
+                ['route' => 'crm.dashboard', 'icon' => 'analytics', 'label' => 'CRM', 'match' => ['crm.*']],
+                ['route' => 'expense.getTable', 'icon' => 'receipt_long', 'label' => 'Pengeluaran', 'match' => ['expense.*']],
+            ],
+        ],
+        [
+            'label' => 'Master Data',
+            'items' => [
                 ['route' => 'product.getTable', 'icon' => 'local_laundry_service', 'label' => 'Products', 'match' => ['product.*']],
+                ['route' => 'kategori.getTable', 'icon' => 'category', 'label' => 'Kategori', 'match' => ['kategori.*']],
+                ['route' => 'discount.getTable', 'icon' => 'sell', 'label' => 'Discount', 'match' => ['discount.*']],
+                ['route' => 'customer.getTable', 'icon' => 'people', 'label' => 'Customers', 'match' => ['customer.*']],
+                ['route' => 'order-status.getTable', 'icon' => 'flag', 'label' => 'Status Order', 'match' => ['order-status.*']],
+                ['route' => 'user.getTable', 'icon' => 'manage_accounts', 'label' => 'Users', 'match' => ['user.*']],
             ],
         ],
         [
@@ -53,20 +57,17 @@ return [
             'label' => 'Settings',
             'items' => [
                 ['route' => 'settings.website', 'icon' => 'language', 'label' => 'Website'],
-                ['route' => 'settings.env', 'icon' => 'settings', 'label' => 'Environment'],
                 ['route' => 'native-bridge-test', 'icon' => 'phone_android', 'label' => 'NativeBridge Test'],
             ],
         ],
     ],
 
     'bottom_nav' => [
-
-        ['route' => 'dashboard', 'icon' => 'home', 'label' => 'Left'],
-        ['route' => 'dashboard', 'icon' => 'home', 'label' => 'Kiri'],
         ['route' => 'dashboard', 'icon' => 'home', 'label' => 'Home'],
-        ['route' => 'dashboard', 'icon' => 'home', 'label' => 'Kanan'],
-        ['route' => 'dashboard', 'icon' => 'home', 'label' => 'Right'],
-
+        ['route' => 'pos.index', 'icon' => 'point_of_sale', 'label' => 'POS'],
+        ['route' => 'order.getTable', 'icon' => 'receipt_long', 'label' => 'Orders'],
+        ['route' => 'customer.getTable', 'icon' => 'people', 'label' => 'Customers'],
+        ['route' => 'settings.website', 'icon' => 'settings', 'label' => 'Settings'],
     ],
 
 ];

@@ -4,7 +4,9 @@ namespace App\Livewire\Pos;
 
 use App\Actions\CreateOrderAction;
 use App\Models\Customer;
+use App\Models\Discount;
 use App\Models\Kategori;
+use App\Models\Order;
 use App\Models\Product;
 use Illuminate\Validation\ValidationException;
 use Livewire\Component;
@@ -20,15 +22,83 @@ class PosTerminal extends Component
 
     public $customerId = null;
 
-    public bool $walkinMode = false;
-
     public string $walkinNama = '';
 
     public string $walkinTelepon = '';
 
     public bool $saveWalkinAsCustomer = false;
 
+    public string $promoKode = '';
+
+    public $discountId = null;
+
+    public string $discountNama = '';
+
+    public float $discountAmount = 0;
+
     public array $errors = [];
+
+    // QR modal state
+    public bool $showQr = false;
+
+    public string $qrOrderId = '';
+
+    public string $qrOrderCode = '';
+
+    public float $qrTotal = 0;
+
+    public int $qrSuffix = 0;
+
+    public string $qrDataUri = '';
+
+    public bool $qrPaid = false;
+
+    public int $qrStatusId = 0;
+
+    public int $qrTimeLeft = 0;
+
+    public function applyPromo(): void
+    {
+        $this->discountId = null;
+        $this->discountNama = '';
+        $this->discountAmount = 0;
+
+        if ($this->promoKode === '') {
+            return;
+        }
+
+        $discount = Discount::aktif()
+            ->where('discount_kode', strtoupper($this->promoKode))
+            ->first();
+
+        if (! $discount) {
+            $this->errors = ['promo' => ['Kode promo tidak valid atau sudah kedaluwarsa']];
+
+            return;
+        }
+
+        $diskon = $discount->hitungDiskon($this->subtotal);
+
+        if ($diskon <= 0) {
+            $this->errors = ['promo' => ['Minimal pembelian '.formatAngka($discount->discount_min_pembelian)]];
+
+            return;
+        }
+
+        $this->discountId = $discount->discount_id;
+        $this->discountNama = $discount->discount_nama.' ('.($discount->discount_tipe === 'persen' ? $discount->discount_nilai.'%' : formatAngka($discount->discount_nilai)).')';
+        $this->discountAmount = $diskon;
+        unset($this->errors['promo']);
+    }
+
+    public function removePromo(): void
+    {
+        $this->promoKode = '';
+        $this->discountId = null;
+        $this->discountNama = '';
+        $this->discountAmount = 0;
+        unset($this->errors['promo']);
+    }
 
     public function addToCart(int $productId): void
     {
@@ -62,17 +132,32 @@ class PosTerminal extends Component
         }
 
         $this->cart[$index]['qty'] = max(1, min(999, $this->cart[$index]['qty'] + $delta));
+
+        // Recalculate discount if promo applied
+        if ($this->discountId) {
+            $this->applyPromo();
+        }
     }
 
     public function removeLine(int $index): void
     {
         unset($this->cart[$index]);
         $this->cart = array_values($this->cart);
+
+        // Recalculate discount if promo applied
+        if ($this->discountId) {
+            $this->applyPromo();
+        }
     }
 
     public function getSubtotalProperty(): float
     {
         return collect($this->cart)->sum(fn ($line) => $line['harga'] * $line['qty']);
+    }
+
+    public function getTotalProperty(): float
+    {
+        return max(0, $this->subtotal - $this->discountAmount);
     }
 
     public function getEstimasiJamProperty(): int
@@ -88,8 +173,8 @@ class PosTerminal extends Component
             $walkinNama = null;
             $walkinTelepon = null;
         } else {
-            $walkinNama = $this->walkinNama;
-            $walkinTelepon = $this->walkinTelepon;
+            $walkinNama = $this->walkinNama !== '' ? $this->walkinNama : 'Walk-in';
+            $walkinTelepon = $this->walkinTelepon !== '' ? $this->walkinTelepon : '-';
         }
 
         try {
@@ -100,6 +185,8 @@ class PosTerminal extends Component
                 'save_walkin_customer' => ! $this->customerId && $this->saveWalkinAsCustomer,
                 'metode_pengambilan' => 'antar_toko',
                 'metode_pembayaran' => 'tunai',
+                'discount_id' => $this->discountId,
+                'diskon' => $this->discountAmount,
                 'items' => collect($this->cart)->map(fn ($line) => [
                     'product_id' => $line['product_id'],
                     'qty' => $line['qty'],
@@ -111,9 +198,64 @@ class PosTerminal extends Component
             return;
         }
 
-        $this->reset('cart', 'customerId', 'walkinNama', 'walkinTelepon', 'saveWalkinAsCustomer', 'walkinMode');
+        $this->reset('cart', 'customerId', 'walkinNama', 'walkinTelepon', 'saveWalkinAsCustomer', 'promoKode', 'discountId', 'discountNama', 'discountAmount');
 
-        return redirect()->route('order.getShow', ['id' => $order->getKey()]);
+        // Show QRIS modal
+        $this->qrOrderId = $order->getKey();
+        $this->qrOrderCode = $order->order_code;
+        $this->qrTotal = (float) $order->order_total;
+        $this->qrSuffix = random_int(10, 99);
+        $this->qrStatusId = $order->order_status_id;
+        $this->qrTimeLeft = config('app.qris_timeout', 300);
+        $qrText = nominalQRIS(config('app.qris_data'), $this->qrTotal + $this->qrSuffix);
+        $this->qrDataUri = qrCodeDataUri($qrText, 8, 2);
+        $this->qrPaid = false;
+        $this->showQr = true;
+    }
+
+    public function closeQr(): void
+    {
+        $this->showQr = false;
+        $this->qrOrderId = '';
+        $this->qrOrderCode = '';
+        $this->qrTotal = 0;
+        $this->qrSuffix = 0;
+        $this->qrDataUri = '';
+        $this->qrPaid = false;
+        $this->qrStatusId = 0;
+        $this->qrTimeLeft = 0;
+    }
+
+    public function pollQrStatus(): void
+    {
+        if (! $this->showQr || $this->qrPaid || $this->qrOrderId === '') {
+            return;
+        }
+
+        $order = Order::find($this->qrOrderId);
+        if ($order && $order->order_status_id !== $this->qrStatusId) {
+            $this->qrPaid = true;
+            $this->dispatch('qr-paid');
+        }
+    }
+
+    public function decrementTimer(): void
+    {
+        if (! $this->showQr || $this->qrPaid) {
+            return;
+        }
+
+        if ($this->qrTimeLeft > 0) {
+            $this->qrTimeLeft--;
+        }
+    }
+
+    public function getCustomerResultsProperty()
+    {
+        return Customer::where('customer_nama', 'like', '%'.$this->customerSearch.'%')
+            ->orderBy('customer_nama')
+            ->limit(20)
+            ->get();
     }
 
     public function render()
@@ -127,8 +269,8 @@ class PosTerminal extends Component
         return view('livewire.pos.pos-terminal', [
             'kategoris' => Kategori::where('kategori_is_aktif', true)->get(),
             'products' => $products,
-            'customerOptions' => Customer::orderBy('customer_nama')->limit(100)->get()
-                ->pluck('customer_nama', 'customer_id')->all(),
+            'customers' => Customer::orderBy('customer_nama')->get(),
+            'suggestedPromos' => Discount::aktif()->limit(5)->get(),
         ]);
     }
 }

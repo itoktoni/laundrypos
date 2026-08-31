@@ -2,7 +2,9 @@
 
 namespace Database\Seeders;
 
+use App\Models\Kategori;
 use App\Models\Laundry;
+use App\Models\Product;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -20,7 +22,7 @@ class LaundryDemoSeeder extends Seeder
             ]
         );
 
-        User::firstOrCreate(
+        $owner = User::firstOrCreate(
             ['email' => 'owner@laundry.test'],
             [
                 'name' => 'Owner',
@@ -30,13 +32,15 @@ class LaundryDemoSeeder extends Seeder
             ]
         );
 
+        $laundry->hasUsers()->syncWithoutDetaching([$owner->id]);
+
         // Tenant scoping reads from session; provide it for the seeder context.
         session(['laundry_id' => $laundry->laundry_id]);
 
-        $kategori = \App\Models\Kategori::firstOrCreate(['kategori_nama' => 'Pakaian']);
-        \App\Models\Kategori::firstOrCreate(['kategori_nama' => 'Sepatu']);
+        $kategori = Kategori::firstOrCreate(['kategori_nama' => 'Pakaian']);
+        Kategori::firstOrCreate(['kategori_nama' => 'Sepatu']);
 
-        \App\Models\Product::firstOrCreate(
+        Product::firstOrCreate(
             ['product_nama' => 'Cuci Kiloan', 'product_id_kategori' => $kategori->getKey()],
             [
                 'product_satuan' => 'kg',
@@ -44,8 +48,8 @@ class LaundryDemoSeeder extends Seeder
                 'product_estimasi_jam' => 48,
             ]
         );
-        \App\Models\Product::firstOrCreate(
-            ['product_nama' => 'Cuci Sepatu', 'product_id_kategori' => \App\Models\Kategori::where('kategori_nama', 'Sepatu')->first()->getKey()],
+        Product::firstOrCreate(
+            ['product_nama' => 'Cuci Sepatu', 'product_id_kategori' => Kategori::where('kategori_nama', 'Sepatu')->first()->getKey()],
             [
                 'product_satuan' => 'pasang',
                 'product_harga_dasar' => 25000,

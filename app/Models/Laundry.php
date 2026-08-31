@@ -32,7 +32,7 @@ class Laundry extends BaseModel
 
     public function hasUsers()
     {
-        return $this->belongsToMany(User::class, 'laundry_user', 'laundry_id', 'id', 'laundry_id', 'id');
+        return $this->belongsToMany(User::class, 'laundry_user', 'laundry_id', 'user_id');
     }
 
     protected static function booted(): void
