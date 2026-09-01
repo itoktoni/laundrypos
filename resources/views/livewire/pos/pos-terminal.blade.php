@@ -4,22 +4,75 @@ use App\Livewire\Pos\PosTerminal;
 /** @var PosTerminal $this */ ?>
 
 <div class="flex flex-col gap-4">
-    {{-- Top bar: customer selector --}}
+    {{-- Top bar: customer selector (redesigned searchable) --}}
     <div class="flex items-center gap-3">
-        <div class="flex-1 max-w-sm">
-            <label class="text-xs text-on-surface-variant mb-1 block">Pelanggan</label>
-            <select wire:model.live="customerId" class="select select-sm w-full">
-                <option value="">Walk-in</option>
-                @foreach ($customers as $customer)
-                    <option value="{{ $customer->customer_id }}">{{ $customer->customer_nama }}</option>
-                @endforeach
-            </select>
+        <div class="flex-1 max-w-md" x-data="{
+                open: false,
+                q: '',
+                get filtered() {
+                    const list = @js($customers->map(fn($c) => ['id' => $c->customer_id, 'nama' => $c->customer_nama, 'telp' => $c->customer_telepon])->values());
+                    if (!this.q.trim()) return list;
+                    const s = this.q.toLowerCase();
+                    return list.filter(c => c.nama.toLowerCase().includes(s) || (c.telp||'').includes(s));
+                },
+                get selectedLabel() {
+                    if (!$wire.customerId) return 'Walk-in';
+                    const list = @js($customers->map(fn($c) => ['id' => (string)$c->customer_id, 'nama' => $c->customer_nama])->values());
+                    const found = list.find(c => c.id == $wire.customerId);
+                    return found ? found.nama : 'Walk-in';
+                }
+            }" @click.away="open = false">
+            <label class="text-xs font-medium text-on-surface-variant mb-1 block flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">person</span> Pelanggan</label>
+            <div class="relative">
+                <button type="button" @click="open = !open" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border bg-surface-container-lowest text-sm text-left hover:border-primary/30 focus:border-primary focus:ring-2 focus:ring-primary/20 transition"
+                        :class="open ? 'border-primary ring-2 ring-primary/20' : 'border-outline-variant'">
+                    <span class="w-8 h-8 rounded-full flex items-center justify-center shrink-0" :class="$wire.customerId ? 'bg-primary text-on-primary' : 'bg-outline-variant/40 text-on-surface-variant'">
+                        <span class="material-symbols-outlined text-[16px]" x-text="$wire.customerId ? 'person' : 'person_add'"></span>
+                    </span>
+                    <span class="flex-1 min-w-0">
+                        <span class="block text-sm font-medium truncate" x-text="selectedLabel"></span>
+                        <span class="block text-xs text-on-surface-variant truncate" x-text="$wire.customerId ? 'Pelanggan terdaftar' : 'Tanpa member — isi walk-in jika perlu'"></span>
+                    </span>
+                    <span class="material-symbols-outlined text-[18px] text-on-surface-variant transition-transform" :class="open ? 'rotate-180' : ''">expand_more</span>
+                </button>
+
+                <div x-show="open" x-transition x-cloak class="absolute left-0 right-0 top-full mt-2 bg-surface-container-lowest border border-outline-variant rounded-xl shadow-xl overflow-hidden z-30">
+                    <div class="p-2 border-b border-outline-variant">
+                        <div class="relative">
+                            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]">search</span>
+                            <input type="text" x-model="q" placeholder="Cari nama atau telepon..." class="w-full pl-9 pr-8 py-2 rounded-lg border border-outline-variant bg-surface text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none">
+                            <button type="button" x-show="q" @click="q=''" class="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full hover:bg-surface-container flex items-center justify-center"><span class="material-symbols-outlined text-[14px]">close</span></button>
+                        </div>
+                    </div>
+                    <div class="max-h-64 overflow-y-auto py-1">
+                        <button type="button" @click="$wire.set('customerId', null); open=false; q=''" class="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-surface-container text-left" :class="!$wire.customerId ? 'bg-primary/10' : ''">
+                            <span class="w-8 h-8 rounded-full bg-outline-variant/40 flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-[16px]">person_add</span></span>
+                            <span class="flex-1"><span class="block text-sm font-medium">Walk-in</span><span class="block text-xs text-on-surface-variant">Pelanggan tanpa member</span></span>
+                            <span x-show="!$wire.customerId" class="material-symbols-outlined text-primary text-[18px]">check</span>
+                        </button>
+                        <template x-for="c in filtered" :key="c.id">
+                            <button type="button" @click="$wire.set('customerId', c.id); open=false" class="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-surface-container text-left" :class="$wire.customerId == c.id ? 'bg-primary/10' : ''">
+                                <span class="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 text-xs font-bold" x-text="c.nama.charAt(0).toUpperCase()"></span>
+                                <span class="flex-1 min-w-0"><span class="block text-sm font-medium truncate" x-text="c.nama"></span><span class="block text-xs text-on-surface-variant truncate" x-text="c.telp || '—'"></span></span>
+                                <span x-show="$wire.customerId == c.id" class="material-symbols-outlined text-primary text-[18px]">check</span>
+                            </button>
+                        </template>
+                        <template x-if="filtered.length === 0">
+                            <p class="px-3 py-6 text-center text-sm text-on-surface-variant">Tidak ada pelanggan</p>
+                        </template>
+                    </div>
+                    <div class="p-2 border-t border-outline-variant bg-surface-container/50 flex justify-between items-center">
+                        <span class="text-xs text-on-surface-variant" x-text="filtered.length + ' pelanggan'"></span>
+                        <a href="{{ route('customer.getCreate') }}" wire:navigate class="text-xs font-medium text-primary hover:underline inline-flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">add</span> Pelanggan baru</a>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
     {{-- Left panel: kategori tabs + product grid --}}
-    <div class="lg:col-span-2 flex flex-col min-h-0">
+    <div class="lg:col-span-2 flex flex-col min-h-0" x-data="{ view: localStorage.getItem('pos_view') || 'grid' }" x-init="$watch('view', v => localStorage.setItem('pos_view', v))">
         {{-- Kategori tabs --}}
         <div class="flex gap-2 mb-3 overflow-x-auto pb-2 shrink-0">
             <button wire:click="$set('activeKategoriId', null)"
@@ -32,20 +85,36 @@ use App\Livewire\Pos\PosTerminal;
             @endforeach
         </div>
 
-        {{-- Search --}}
-        <input type="text" wire:model.live.debounce.300ms="search" placeholder="Cari produk..."
-               class="input w-full mb-4 shrink-0" />
+        {{-- Search + view toggle --}}
+        <div class="flex gap-2 mb-4 shrink-0">
+            <div class="relative flex-1">
+                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
+                <input type="text" wire:model.live.debounce.300ms="search" placeholder="Cari produk..."
+                       class="w-full pl-10 pr-10 py-2.5 rounded-xl border border-outline-variant bg-surface-container-lowest text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition" />
+                @if($search !== '')
+                    <button type="button" wire:click="$set('search', '')" class="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-surface-container hover:bg-outline-variant flex items-center justify-center">
+                        <span class="material-symbols-outlined text-[14px]">close</span>
+                    </button>
+                @endif
+            </div>
+            <button type="button" @click="view = (view === 'grid' ? 'list' : 'grid')" :title="view === 'grid' ? 'Tampilkan list (1 kolom)' : 'Tampilkan grid'"
+                    class="shrink-0 w-11 h-11 rounded-xl border border-outline-variant bg-surface-container-lowest hover:bg-surface-container flex items-center justify-center text-on-surface-variant hover:text-on-surface transition">
+                <span class="material-symbols-outlined text-[20px]" x-text="view === 'grid' ? 'view_list' : 'grid_view'"></span>
+            </button>
+        </div>
 
         {{-- Product grid — scrollable --}}
-        <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2 overflow-y-auto max-h-[calc(100vh-20rem)] pb-20 md:pb-4">
+        <div :class="view === 'list' ? 'grid grid-cols-1 gap-2' : 'grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2'"
+             class="overflow-y-auto max-h-[calc(100vh-20rem)] pb-20 md:pb-4">
             @forelse ($products as $product)
                 <button type="button" wire:click="addToCart({{ $product->product_id }})"
-                        class="border border-outline-variant rounded-lg px-3 py-2 text-left bg-surface-container-lowest hover:bg-surface-container transition shadow-sm">
+                        class="border border-outline-variant rounded-xl px-3 py-3 text-left bg-surface-container-lowest hover:bg-surface-container hover:shadow-md hover:border-primary/20 transition shadow-sm"
+                        :class="view === 'list' ? 'flex flex-row items-center justify-between' : ''">
                     <p class="text-sm font-medium truncate">{{ $product->product_nama }}</p>
-                    <p class="text-xs text-primary font-bold">{{ formatAngka($product->product_harga_dasar) }} / {{ $product->product_satuan?->description ?? $product->product_satuan }}</p>
+                    <p class="text-xs text-primary font-bold mt-1">{{ formatAngka($product->product_harga_dasar) }} / {{ $product->product_satuan?->description ?? $product->product_satuan }}</p>
                 </button>
             @empty
-                <p class="col-span-full text-sm text-on-surface-variant">Tidak ada produk ditemukan.</p>
+                <p class="col-span-full text-sm text-on-surface-variant py-8 text-center">Tidak ada produk ditemukan.</p>
             @endforelse
         </div>
     </div>
@@ -130,13 +199,39 @@ use App\Livewire\Pos\PosTerminal;
 
         {{-- Action buttons --}}
         <div class="flex gap-2 mt-4">
-            <button type="button" wire:click="confirmOrder" wire:loading.attr="disabled"
-                    class="btn btn-primary flex-1" @disabled(count($cart) === 0)>
-                Bayar
+            <button type="button" wire:click="confirmCash" wire:loading.attr="disabled"
+                    class="flex-1 inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl font-semibold text-sm border bg-success text-white border-success/20 hover:bg-success/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors" @disabled(count($cart) === 0)>
+                <span class="material-symbols-outlined text-[18px]">payments</span> CASH
             </button>
+            <button type="button" wire:click="confirmOrder" wire:loading.attr="disabled"
+                    class="btn btn-primary flex-1 inline-flex items-center justify-center gap-1.5" @disabled(count($cart) === 0)>
+                <span class="material-symbols-outlined text-[18px]">qr_code</span> Bayar
+            </button>
+        </div>
+        <p class="text-[11px] text-center text-on-surface-variant mt-1.5">CASH = bayar tunai sesuai nominal (tanpa QRIS)</p>
+    </div>
+</div>
+
+{{-- Cash Success Modal --}}
+@if ($showCash)
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" wire:click.self="closeCash">
+    <div class="bg-surface-container-lowest rounded-2xl shadow-2xl p-6 w-full max-w-sm mx-4 text-center">
+        <div class="flex flex-col items-center gap-3 py-2">
+            <div class="w-20 h-20 rounded-full bg-success-container flex items-center justify-center">
+                <span class="material-symbols-outlined text-[48px] text-on-success-container">check_circle</span>
+            </div>
+            <h3 class="text-lg font-bold text-on-surface">Pembayaran Tunai Berhasil</h3>
+            <p class="text-sm text-on-surface-variant">{{ $cashOrderCode }}</p>
+            <p class="text-2xl font-bold text-success">{{ formatAngka($cashTotal) }}</p>
+            <p class="text-xs text-on-surface-variant">Metode: Tunai — dibayar sesuai nominal</p>
+        </div>
+        <div class="flex gap-2 mt-4">
+            <a href="{{ $cashOrderId ? route('order.getShow', ['id' => $cashOrderId]) : '#' }}" wire:navigate class="btn btn-outline flex-1">Lihat Order</a>
+            <button type="button" wire:click="closeCash" class="btn btn-primary flex-1">Selesai</button>
         </div>
     </div>
 </div>
+@endif
 
 {{-- QRIS Modal --}}
 @if ($showQr)

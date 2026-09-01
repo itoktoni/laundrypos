@@ -1,15 +1,8 @@
-import { query, run } from './db.js';
+import db from './db.js';
 import { getCart, clearCart } from './cart.js';
+import { generateId } from './db.js';
 
-function generateUUID() {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-        const r = (Math.random() * 16) | 0;
-        const v = c === 'x' ? r : (r & 0x3) | 0x8;
-        return v.toString(16);
-    });
-}
-
-export function createOfflineOrder({
+export async function createOfflineOrder({
     userId,
     laundryId,
     customerId = null,
@@ -17,13 +10,13 @@ export function createOfflineOrder({
     paymentMethod = 'cash',
     notes = '',
 }) {
-    const cart = getCart();
+    const cart = await getCart();
     if (cart.length === 0) {
         throw new Error('Cart is empty');
     }
 
     const total = cart.reduce((sum, item) => sum + item.subtotal, 0) - discount;
-    const orderId = generateUUID();
+    const orderId = generateId();
     const now = new Date().toISOString();
 
     const items = cart.map((item) => ({
@@ -34,27 +27,25 @@ export function createOfflineOrder({
         subtotal: item.subtotal,
     }));
 
-    run(
-        `INSERT INTO offline_orders
-         (id, user_id, laundry_id, customer_id, items, total, discount,
-          payment_method, status, notes, created_at, updated_at, sync_status)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'offline_pending', ?, ?, ?, 'pending')`,
-        [
-            orderId,
-            userId,
-            laundryId,
-            customerId,
-            JSON.stringify(items),
-            total,
-            discount,
-            paymentMethod,
-            notes,
-            now,
-            now,
-        ]
-    );
+    await db.offline_orders.add({
+        id: orderId,
+        user_id: userId,
+        laundry_id: laundryId,
+        customer_id: customerId,
+        items,
+        total,
+        discount,
+        payment_method: paymentMethod,
+        status: 'offline_pending',
+        notes,
+        created_at: now,
+        updated_at: now,
+        sync_status: 'pending',
+        server_order_id: null,
+        sync_error: null,
+    });
 
-    clearCart();
+    await clearCart();
 
     return {
         id: orderId,
@@ -64,56 +55,41 @@ export function createOfflineOrder({
     };
 }
 
-export function getOfflineOrders(status = null) {
-    let sql = 'SELECT * FROM offline_orders';
-    const params = [];
+export async function getOfflineOrders(status = null) {
     if (status) {
-        sql += ' WHERE sync_status = ?';
-        params.push(status);
+        return db.offline_orders.where('sync_status').equals(status).reverse().sortBy('created_at');
     }
-    sql += ' ORDER BY created_at DESC';
-    const orders = query(sql, params);
-    return orders.map((o) => ({
-        ...o,
-        items: JSON.parse(o.items),
-    }));
+    return db.offline_orders.orderBy('created_at').reverse().toArray();
 }
 
-export function getPendingOrders() {
-    return getOfflineOrders('pending');
+export async function getPendingOrders() {
+    return db.offline_orders.where('sync_status').equals('pending').toArray();
 }
 
-export function getPendingOrderCount() {
-    const result = query(
-        "SELECT COUNT(*) as count FROM offline_orders WHERE sync_status = 'pending'"
-    );
-    return result[0]?.count || 0;
+export async function getPendingOrderCount() {
+    return db.offline_orders.where('sync_status').equals('pending').count();
 }
 
-export function markOrderSynced(clientId, serverOrderId) {
-    run(
-        `UPDATE offline_orders
-         SET sync_status = 'synced', server_order_id = ?, updated_at = ?
-         WHERE id = ?`,
-        [serverOrderId, new Date().toISOString(), clientId]
-    );
+export async function markOrderSynced(clientId, serverOrderId) {
+    await db.offline_orders.update(clientId, {
+        sync_status: 'synced',
+        server_order_id: serverOrderId,
+        updated_at: new Date().toISOString(),
+    });
 }
 
-export function markOrderConflict(clientId, error) {
-    run(
-        `UPDATE offline_orders
-         SET sync_status = 'conflict', sync_error = ?, updated_at = ?
-         WHERE id = ?`,
-        [error, new Date().toISOString(), clientId]
-    );
+export async function markOrderConflict(clientId, error) {
+    await db.offline_orders.update(clientId, {
+        sync_status: 'conflict',
+        sync_error: error,
+        updated_at: new Date().toISOString(),
+    });
 }
 
-export function getOrderById(id) {
-    const results = query('SELECT * FROM offline_orders WHERE id = ?', [id]);
-    if (results.length === 0) return null;
-    return { ...results[0], items: JSON.parse(results[0].items) };
+export async function getOrderById(id) {
+    return db.offline_orders.get(id);
 }
 
-export function deleteOfflineOrder(id) {
-    run('DELETE FROM offline_orders WHERE id = ?', [id]);
+export async function deleteOfflineOrder(id) {
+    await db.offline_orders.delete(id);
 }

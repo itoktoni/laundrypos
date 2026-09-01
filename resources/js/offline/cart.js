@@ -1,56 +1,55 @@
-import { query, run } from './db.js';
+import db from './db.js';
 
-export function addToCart(productId, productName, price, qty = 1) {
-    const existing = query(
-        'SELECT * FROM cart WHERE product_id = ?',
-        [productId]
-    );
+export async function addToCart(productId, productName, price, qty = 1) {
+    const existing = await db.cart.where('product_id').equals(productId).first();
 
-    if (existing.length > 0) {
-        run(
-            'UPDATE cart SET qty = qty + ? WHERE product_id = ?',
-            [qty, productId]
-        );
+    if (existing) {
+        await db.cart.update(existing.id, { qty: existing.qty + qty });
     } else {
-        run(
-            'INSERT INTO cart (product_id, product_nama, qty, price) VALUES (?, ?, ?, ?)',
-            [productId, productName, qty, price]
-        );
+        await db.cart.add({
+            product_id: productId,
+            product_nama: productName,
+            qty,
+            price,
+            added_at: new Date().toISOString(),
+        });
     }
 }
 
-export function updateCartQty(cartId, qty) {
+export async function updateCartQty(cartId, qty) {
     if (qty <= 0) {
-        removeFromCart(cartId);
+        await removeFromCart(cartId);
         return;
     }
-    run('UPDATE cart SET qty = ? WHERE id = ?', [qty, cartId]);
+    await db.cart.update(cartId, { qty });
 }
 
-export function removeFromCart(cartId) {
-    run('DELETE FROM cart WHERE id = ?', [cartId]);
+export async function removeFromCart(cartId) {
+    await db.cart.delete(cartId);
 }
 
-export function getCart() {
-    return query(
-        'SELECT *, (qty * price) as subtotal FROM cart ORDER BY added_at ASC'
-    );
+export async function getCart() {
+    const items = await db.cart.toArray();
+    return items.map((item) => ({
+        ...item,
+        subtotal: item.qty * item.price,
+    }));
 }
 
-export function getCartTotal() {
-    const result = query('SELECT SUM(qty * price) as total FROM cart');
-    return result[0]?.total || 0;
+export async function getCartTotal() {
+    const items = await db.cart.toArray();
+    return items.reduce((sum, item) => sum + item.qty * item.price, 0);
 }
 
-export function getCartCount() {
-    const result = query('SELECT SUM(qty) as count FROM cart');
-    return result[0]?.count || 0;
+export async function getCartCount() {
+    const items = await db.cart.toArray();
+    return items.reduce((sum, item) => sum + item.qty, 0);
 }
 
-export function clearCart() {
-    run('DELETE FROM cart');
+export async function clearCart() {
+    await db.cart.clear();
 }
 
-export function updateCartItemPrice(cartId, newPrice) {
-    run('UPDATE cart SET price = ? WHERE id = ?', [newPrice, cartId]);
+export async function updateCartItemPrice(cartId, newPrice) {
+    await db.cart.update(cartId, { price: newPrice });
 }

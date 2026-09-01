@@ -16,9 +16,10 @@
         "apexcharts": "^6.10.0",
         "autoprefixer": "^10.4.20",
         "centrifuge": "^5.7.0",
+        "chart.js": "^4.5.1",
         "concurrently": "^9.0.1",
+        "dexie": "^4.4.5",
         "laravel-vite-plugin": "^3.1",
-        "sql.js": "^1.14.2",
         "tailwindcss": "^4.0.7",
         "vite": "^8.0.0"
     },

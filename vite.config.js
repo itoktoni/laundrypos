@@ -1,8 +1,6 @@
 import { defineConfig } from 'vite';
 import laravel from 'laravel-vite-plugin';
 import tailwindcss from "@tailwindcss/vite";
-import { copyFileSync, mkdirSync, existsSync } from 'fs';
-import { resolve } from 'path';
 
 export default defineConfig(() => {
     return {
@@ -12,19 +10,6 @@ export default defineConfig(() => {
                 refresh: true,
             }),
             tailwindcss(),
-            {
-                name: 'copy-sql-wasm',
-                buildStart() {
-                    const src = resolve('node_modules/sql.js/dist/sql-wasm-browser.wasm');
-                    const dest = resolve('public/js/sql-wasm-browser.wasm');
-                    if (!existsSync(resolve('public/js'))) {
-                        mkdirSync(resolve('public/js'), { recursive: true });
-                    }
-                    if (existsSync(src)) {
-                        copyFileSync(src, dest);
-                    }
-                },
-            },
         ],
         server: {
             cors: true,

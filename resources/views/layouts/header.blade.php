@@ -1,5 +1,5 @@
-{{-- Header --}}
-<header class="fixed top-0 w-full z-50 bg-surface-container-lowest shadow-sm border-b border-outline-variant flex items-center justify-between px-3 md:px-8 h-16">
+{{-- Header - bottom border indicates online (green) / offline (red) --}}
+<header id="app-header" class="fixed top-0 w-full z-50 bg-surface-container-lowest shadow-sm border-b-2 flex items-center justify-between px-3 md:px-8 h-16" style="border-bottom-color: #16a34a;">
     <div class="flex min-w-0 items-center gap-2 md:gap-4">
         <button type="button" class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full hover:bg-surface-container transition-colors md:hidden" aria-label="Open navigation menu" @click="drawerOpen = !drawerOpen">
             <span class="material-symbols-outlined text-[22px] text-on-surface-variant">menu</span>
@@ -12,7 +12,19 @@
         </a>
     </div>
 
-    <div class="flex items-center gap-2">
+    <div class="flex items-center gap-1 md:gap-2">
+        {{-- Branch switcher (staff) --}}
+        @php $curLaundry = \App\Models\Laundry::find(session('laundry_id')); @endphp
+        @if($curLaundry)
+            <a href="{{ route('laundry.picker') }}" wire:navigate class="hidden md:inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-outline-variant bg-surface-container hover:bg-surface-container-high text-xs font-medium text-on-surface transition-colors" title="Ganti cabang">
+                <span class="material-symbols-outlined text-[16px] text-primary">storefront</span>
+                <span class="max-w-[14ch] truncate">{{ $curLaundry->laundry_nama }}</span>
+                <span class="material-symbols-outlined text-[14px] text-on-surface-variant">swap_horiz</span>
+            </a>
+            <a href="{{ route('laundry.picker') }}" wire:navigate class="md:hidden w-9 h-9 rounded-full border border-outline-variant bg-surface-container flex items-center justify-center text-primary" title="Ganti cabang">
+                <span class="material-symbols-outlined text-[18px]">storefront</span>
+            </a>
+        @endif
 
         {{-- Notification Dropdown --}}
         <div class="relative" x-data="{ open: false }" @click.away="open = false">
@@ -63,6 +75,10 @@
                     <a href="{{ route('profile.edit') }}" wire:navigate class="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-surface-container-low transition-colors text-on-surface-variant hover:text-on-surface">
                         <span class="material-symbols-outlined text-xl">person</span>
                         <span class="font-body-sm text-body-sm">My Profile</span>
+                    </a>
+                    <a href="{{ route('laundry.picker') }}" wire:navigate class="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-surface-container-low transition-colors text-on-surface-variant hover:text-on-surface">
+                        <span class="material-symbols-outlined text-xl">storefront</span>
+                        <span class="font-body-sm text-body-sm">Ganti Cabang</span>
                     </a>
                     <a href="#" class="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-surface-container-low transition-colors text-on-surface-variant hover:text-on-surface">
                         <span class="material-symbols-outlined text-xl">help</span>

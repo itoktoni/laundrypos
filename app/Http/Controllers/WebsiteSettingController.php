@@ -34,6 +34,9 @@ class WebsiteSettingController extends Controller
             'remove_favicon' => ['nullable', 'boolean'],
             'primary_color' => ['nullable', 'string', 'max:7'],
             'footer_text' => ['nullable', 'string'],
+            'offline_enabled' => ['nullable', 'boolean'],
+            'staff_target' => ['nullable', 'integer', 'min:1', 'max:10000'],
+            'staff_fee' => ['nullable', 'integer', 'min:0', 'max:1000000'],
         ]);
 
         $existing = WebsiteSetting::raw();
@@ -67,6 +70,10 @@ class WebsiteSettingController extends Controller
         if (! empty($validated['primary_color'])) {
             $colors['primary'] = $validated['primary_color'];
         }
+        // Toggle offline: checkbox absent => false
+        $validated['offline_enabled'] = $request->boolean('offline_enabled');
+        $validated['staff_target'] = $request->integer('staff_target') ?: ($existing['staff_target'] ?? config('website.staff_target', 100));
+        $validated['staff_fee'] = $request->integer('staff_fee') ?: ($existing['staff_fee'] ?? config('website.staff_fee', 1000));
         unset($validated['primary_color'], $validated['remove_logo'], $validated['remove_favicon']);
 
         $merged = array_merge($existing, $validated, ['colors' => $colors]);

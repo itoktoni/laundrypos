@@ -76,11 +76,11 @@ class SyncController extends Controller
 
     public function pullSatuan(): JsonResponse
     {
-        $satuan = collect(SatuanEnum::cases())->map(fn ($s) => [
-            'id' => $s->value,
-            'name' => $s->label,
+        $satuan = collect(SatuanEnum::getInstances())->map(fn ($instance) => [
+            'id' => $instance->value,
+            'name' => SatuanEnum::getDescription($instance->value),
             'updated_at' => null,
-        ]);
+        ])->values();
 
         return response()->json(['satuan' => $satuan]);
     }

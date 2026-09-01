@@ -57,6 +57,15 @@ class PosTerminal extends Component
 
     public int $qrTimeLeft = 0;
 
+    // Cash success state
+    public bool $showCash = false;
+
+    public string $cashOrderCode = '';
+
+    public float $cashTotal = 0;
+
+    public string $cashOrderId = '';
+
     public function applyPromo(): void
     {
         $this->discountId = null;
@@ -211,6 +220,59 @@ class PosTerminal extends Component
         $this->qrDataUri = qrCodeDataUri($qrText, 8, 2);
         $this->qrPaid = false;
         $this->showQr = true;
+    }
+
+    public function confirmCash()
+    {
+        $this->errors = [];
+
+        if (empty($this->cart)) {
+            $this->errors = ['cart' => ['Keranjang kosong']];
+            return;
+        }
+
+        if ($this->customerId) {
+            $walkinNama = null;
+            $walkinTelepon = null;
+        } else {
+            $walkinNama = $this->walkinNama !== '' ? $this->walkinNama : 'Walk-in';
+            $walkinTelepon = $this->walkinTelepon !== '' ? $this->walkinTelepon : '-';
+        }
+
+        try {
+            $order = CreateOrderAction::run([
+                'customer_id' => $this->customerId ?: null,
+                'walkin_nama' => $walkinNama,
+                'walkin_telepon' => $walkinTelepon,
+                'save_walkin_customer' => ! $this->customerId && $this->saveWalkinAsCustomer,
+                'metode_pengambilan' => 'antar_toko',
+                'metode_pembayaran' => 'tunai',
+                'discount_id' => $this->discountId,
+                'diskon' => $this->discountAmount,
+                'items' => collect($this->cart)->map(fn ($line) => [
+                    'product_id' => $line['product_id'],
+                    'qty' => $line['qty'],
+                ])->all(),
+            ]);
+        } catch (ValidationException $e) {
+            $this->errors = $e->errors();
+            return;
+        }
+
+        $this->cashOrderId = $order->getKey();
+        $this->cashOrderCode = $order->order_code;
+        $this->cashTotal = (float) $order->order_total;
+        $this->showCash = true;
+
+        $this->reset('cart', 'customerId', 'walkinNama', 'walkinTelepon', 'saveWalkinAsCustomer', 'promoKode', 'discountId', 'discountNama', 'discountAmount');
+    }
+
+    public function closeCash(): void
+    {
+        $this->showCash = false;
+        $this->cashOrderId = '';
+        $this->cashOrderCode = '';
+        $this->cashTotal = 0;
     }
 
     public function closeQr(): void

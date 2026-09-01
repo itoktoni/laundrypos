@@ -1,4 +1,4 @@
-import { query, run, generateId } from './db.js';
+import db, { generateId } from './db.js';
 import { upsertProducts, upsertCategories, upsertSatuan } from './products.js';
 import { getPendingOrders, markOrderSynced, markOrderConflict } from './orders.js';
 
@@ -8,29 +8,30 @@ export function isOnline() {
     return navigator.onLine;
 }
 
-export function getLastSyncTime() {
-    const result = query("SELECT value FROM sync_meta WHERE key = 'last_sync_at'");
-    return result[0]?.value || null;
+export async function getLastSyncTime() {
+    const entry = await db.sync_meta.get('last_sync_at');
+    return entry?.value || null;
 }
 
-export function setLastSyncTime(time) {
-    run(
-        "INSERT OR REPLACE INTO sync_meta (key, value, updated_at) VALUES ('last_sync_at', ?, ?)",
-        [time, new Date().toISOString()]
-    );
+export async function setLastSyncTime(time) {
+    await db.sync_meta.put({
+        key: 'last_sync_at',
+        value: time,
+        updated_at: new Date().toISOString(),
+    });
 }
 
-export function getDeviceId() {
-    let result = query("SELECT value FROM sync_meta WHERE key = 'device_id'");
-    if (!result[0]?.value) {
-        const deviceId = generateId();
-        run(
-            "INSERT OR REPLACE INTO sync_meta (key, value, updated_at) VALUES ('device_id', ?, ?)",
-            [deviceId, new Date().toISOString()]
-        );
-        return deviceId;
-    }
-    return result[0].value;
+export async function getDeviceId() {
+    const entry = await db.sync_meta.get('device_id');
+    if (entry?.value) return entry.value;
+
+    const deviceId = generateId();
+    await db.sync_meta.put({
+        key: 'device_id',
+        value: deviceId,
+        updated_at: new Date().toISOString(),
+    });
+    return deviceId;
 }
 
 function getCsrfToken() {
@@ -62,20 +63,20 @@ async function apiRequest(path, options = {}) {
 
 export async function pullProducts() {
     const data = await apiRequest('/products');
-    upsertProducts(data.products);
-    setLastSyncTime(data.last_sync_at);
+    await upsertProducts(data.products);
+    await setLastSyncTime(data.last_sync_at);
     return data.products.length;
 }
 
 export async function pullCategories() {
     const data = await apiRequest('/categories');
-    upsertCategories(data.categories);
+    await upsertCategories(data.categories);
     return data.categories.length;
 }
 
 export async function pullSatuan() {
     const data = await apiRequest('/satuan');
-    upsertSatuan(data.satuan);
+    await upsertSatuan(data.satuan);
     return data.satuan.length;
 }
 
@@ -85,7 +86,7 @@ export async function pullCustomers() {
 }
 
 export async function pushOrders() {
-    const pending = getPendingOrders();
+    const pending = await getPendingOrders();
     if (pending.length === 0) return { synced: 0, failed: 0 };
 
     const payload = {
@@ -107,10 +108,10 @@ export async function pushOrders() {
     });
 
     for (const item of result.synced) {
-        markOrderSynced(item.client_id, item.server_order_id);
+        await markOrderSynced(item.client_id, item.server_order_id);
     }
     for (const item of result.failed) {
-        markOrderConflict(item.client_id, item.error);
+        await markOrderConflict(item.client_id, item.error);
     }
 
     return { synced: result.synced.length, failed: result.failed.length };

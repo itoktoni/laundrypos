@@ -1,4 +1,4 @@
-import { initDB, generateId } from './db.js';
+import './db.js';
 import { getProducts, searchProducts, getProductById } from './products.js';
 import { addToCart, updateCartQty, removeFromCart, getCart, getCartTotal, getCartCount, clearCart } from './cart.js';
 import { createOfflineOrder, getOfflineOrders, getPendingOrderCount, getOrderById } from './orders.js';
@@ -8,10 +8,15 @@ let currentMode = 'unknown';
 let onModeChange = null;
 
 export async function initOfflineMode() {
-    await initDB();
-
-    const deviceId = localStorage.getItem('device_id') || generateId();
-    localStorage.setItem('device_id', deviceId);
+    const offlineEnabled = document.querySelector('meta[name="offline-enabled"]')?.content !== 'false';
+    if (!offlineEnabled) {
+        console.log('Offline mode disabled via settings');
+        updateHeaderDot('offline');
+        // Tandai header sebagai sync mati (tooltip)
+        const header = document.getElementById('app-header');
+        if (header) header.title = 'Sync offline dimatikan';
+        return;
+    }
 
     if (isOnline()) {
         await switchToOnline();
@@ -49,34 +54,46 @@ async function switchToOffline() {
 }
 
 function updateStatusBanner(mode) {
-    let banner = document.getElementById('offline-banner');
-    if (!banner) {
-        banner = document.createElement('div');
-        banner.id = 'offline-banner';
-        banner.style.cssText = `
-            position: fixed; top: 0; left: 0; right: 0; z-index: 9999;
-            padding: 8px 16px; text-align: center; font-size: 14px;
-            font-weight: 500; transition: transform 0.3s ease;
-        `;
-        document.body.prepend(banner);
+    // Top persistent banner is handled by Alpine component #offline-status-indicator; just sync pending count
+    refreshPendingCount();
+    updateHeaderDot(mode);
+}
+
+function updateHeaderDot(mode) {
+    const header = document.getElementById('app-header');
+    if (header) {
+        // hijau saat online, merah saat offline — hanya border bawah
+        header.style.borderBottomColor = mode === 'offline' ? '#dc2626' : '#16a34a';
+        header.style.borderBottomWidth = '3px';
     }
-
-    if (mode === 'offline') {
-        banner.style.backgroundColor = '#fef3c7';
-        banner.style.color = '#92400e';
-        banner.innerHTML = '<span class="mr-2">📡</span> Anda sedang offline. Mode offline aktif.';
-        banner.style.transform = 'translateY(0)';
-    } else {
-        banner.style.backgroundColor = '#d1fae5';
-        banner.style.color = '#065f46';
-        banner.innerHTML = '<span class="mr-2">✅</span> Online. Semua fitur tersedia.';
-        banner.style.transform = 'translateY(0)';
-
-        setTimeout(() => {
-            banner.style.transform = 'translateY(-100%)';
-        }, 3000);
+    // Keep bottom-right pill in sync if present
+    const dot = document.getElementById('header-offline-dot');
+    if (dot) {
+        const circle = dot.querySelector('span:first-child');
+        const label = dot.querySelector('.label');
+        dot.classList.remove('hidden');
+        if (mode === 'offline') {
+            dot.className = 'hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border bg-amber-100 border-amber-300 text-amber-800';
+            if (circle) circle.className = 'w-2 h-2 rounded-full bg-amber-500';
+            if (label) label.textContent = 'Offline';
+        } else {
+            dot.className = 'hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border bg-success/10 border-success/20 text-success';
+            if (circle) circle.className = 'w-2 h-2 rounded-full bg-success animate-pulse';
+            if (label) label.textContent = 'Online';
+        }
     }
 }
+
+async function refreshPendingCount() {
+    try {
+        const count = await getPendingOrderCount();
+        localStorage.setItem('offline_pending', String(count));
+        window.dispatchEvent(new CustomEvent('offline-pending', { detail: count }));
+    } catch (e) {}
+    // Also update after syncs periodically
+}
+
+setInterval(refreshPendingCount, 5000);
 
 export function getMode() {
     return currentMode;

@@ -1,76 +1,67 @@
-import { query, run } from './db.js';
+import db from './db.js';
 
-function safe(v) {
-    return v === undefined ? null : v;
-}
-
-export function getProducts(categoryId = null) {
-    let sql = 'SELECT * FROM products';
-    const params = [];
+export async function getProducts(categoryId = null) {
     if (categoryId) {
-        sql += ' WHERE product_id_kategori = ?';
-        params.push(categoryId);
+        return db.products.where('product_id_kategori').equals(categoryId).toArray();
     }
-    sql += ' ORDER BY product_nama ASC';
-    return query(sql, params);
+    return db.products.toArray();
 }
 
-export function searchProducts(keyword) {
-    return query(
-        'SELECT * FROM products WHERE product_nama LIKE ? ORDER BY product_nama ASC',
-        [`%${keyword}%`]
-    );
+export async function searchProducts(keyword) {
+    const lower = keyword.toLowerCase();
+    return db.products
+        .filter((p) => p.product_nama && p.product_nama.toLowerCase().includes(lower))
+        .toArray();
 }
 
-export function getProductById(id) {
-    const results = query('SELECT * FROM products WHERE product_id = ?', [id]);
-    return results[0] || null;
+export async function getProductById(id) {
+    return db.products.get(id);
 }
 
-export function getCategories() {
-    return query('SELECT * FROM categories ORDER BY name ASC');
+export async function getCategories() {
+    return db.categories.toArray();
 }
 
-export function getSatuan() {
-    return query('SELECT * FROM satuan ORDER BY name ASC');
+export async function getSatuan() {
+    return db.satuan.toArray();
 }
 
-export function upsertProducts(products) {
-    run('DELETE FROM products');
-    for (const p of products) {
-        run(
-            `INSERT INTO products (product_id, product_nama, product_harga_jual, product_stok,
-             product_id_satuan, product_id_kategori, product_foto, updated_at, sync_status)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'synced')`,
-            [
-                safe(p.product_id), safe(p.product_nama), safe(p.product_harga_jual), safe(p.product_stok),
-                safe(p.product_id_satuan), safe(p.product_id_kategori), safe(p.product_foto), safe(p.updated_at),
-            ]
-        );
-    }
+export async function upsertProducts(products) {
+    await db.products.clear();
+    await db.products.bulkAdd(products.map((p) => ({
+        product_id: p.product_id,
+        product_nama: p.product_nama,
+        product_harga_jual: p.product_harga_jual ?? 0,
+        product_stok: p.product_stok ?? 0,
+        product_id_satuan: p.product_id_satuan ?? null,
+        product_id_kategori: p.product_id_kategori ?? null,
+        product_foto: p.product_foto ?? null,
+        product_satuan: p.product_satuan ?? null,
+        product_estimasi_jam: p.product_estimasi_jam ?? null,
+        product_deskripsi: p.product_deskripsi ?? null,
+        product_is_aktif: p.product_is_aktif ?? true,
+        updated_at: p.updated_at ?? null,
+    })));
 }
 
-export function upsertCategories(categories) {
-    run('DELETE FROM categories');
-    for (const c of categories) {
-        run(
-            'INSERT INTO categories (id, name, updated_at) VALUES (?, ?, ?)',
-            [safe(c.id), safe(c.name), safe(c.updated_at)]
-        );
-    }
+export async function upsertCategories(categories) {
+    await db.categories.clear();
+    await db.categories.bulkAdd(categories.map((c) => ({
+        id: c.id,
+        name: c.name,
+        updated_at: c.updated_at ?? null,
+    })));
 }
 
-export function upsertSatuan(satuanList) {
-    run('DELETE FROM satuan');
-    for (const s of satuanList) {
-        run(
-            'INSERT INTO satuan (id, name, updated_at) VALUES (?, ?, ?)',
-            [safe(s.id), safe(s.name), safe(s.updated_at)]
-        );
-    }
+export async function upsertSatuan(satuanList) {
+    await db.satuan.clear();
+    await db.satuan.bulkAdd(satuanList.map((s) => ({
+        id: s.id,
+        name: s.name,
+        updated_at: s.updated_at ?? null,
+    })));
 }
 
-export function getProductCount() {
-    const result = query('SELECT COUNT(*) as count FROM products');
-    return result[0]?.count || 0;
+export async function getProductCount() {
+    return db.products.count();
 }

@@ -70,6 +70,9 @@ if ('serviceWorker' in navigator) {
     });
 }
 
+import Chart from 'chart.js/auto';
+window.Chart = Chart;
+
 import { initOfflineMode } from './offline/app.js';
 
 document.addEventListener('DOMContentLoaded', () => {

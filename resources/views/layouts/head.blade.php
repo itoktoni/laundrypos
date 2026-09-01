@@ -2,6 +2,7 @@
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
     <meta name="csrf-token" content="{{ csrf_token() }}"/>
+    <meta name="offline-enabled" content="{{ (\App\Models\WebsiteSetting::merged()['offline_enabled'] ?? config('website.offline_enabled', true)) ? 'true' : 'false' }}"/>
     <meta name="notification-enabled" content="{{ config('langkahkecil.notification_enable') ? 'true' : 'false' }}"/>
     @if(config('centrifugo.url'))
     <meta name="centrifugo-url" content="{{ str_replace(['http://', 'https://'], ['ws://', 'wss://'], config('centrifugo.url')) }}/connection/websocket"/>
@@ -17,8 +18,6 @@
     {{-- Fonts self-hosted via @fontsource (offline-ready) --}}
     @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/notifications.js'])
     @livewireStyles
-    {{-- Self-hosted apexcharts: CDN sync script di head memperlambat first paint saat reload --}}
-    <script src="{{ asset('js/apexcharts.min.js') }}"></script>
     <script src="{{ asset('js/table.js') }}"></script>
     {{-- Dynamic theme color overrides from website settings --}}
     <style>

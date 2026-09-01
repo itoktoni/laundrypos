@@ -8,7 +8,6 @@ const PRECACHE_URLS = [
     '/manifest.json',
     '/favicon.ico',
     '/favicon.svg',
-    '/js/sql-wasm-browser.wasm',
 ];
 
 self.addEventListener('install', (event) => {
