@@ -31,10 +31,7 @@
         <x-action :model="$model" :action="['save']" />
     </x-form>
 
-    @push('styles')
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    @endpush
-    @push('scripts')
     <script data-leaflet src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
     (function () {
@@ -74,6 +71,8 @@
 
             ensureLeaflet(function () {
                 const map = L.map('laundry-map').setView([defaultLat, defaultLng], 15);
+                // ponytail: kontainer bisa 0px saat morph navigate — paksa ukur ulang.
+                setTimeout(function () { try { map.invalidateSize(); } catch (e) {} }, 300);
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OSM' }).addTo(map);
                 let marker = L.marker([defaultLat, defaultLng], { draggable: true }).addTo(map);
                 let circle = L.circle([defaultLat, defaultLng], { radius: defaultRadius, color: '#00288e', fillOpacity: 0.15 }).addTo(map);
@@ -126,5 +125,4 @@
         document.addEventListener('livewire:navigated', start);
     })();
     </script>
-    @endpush
 </x-layouts::app>
