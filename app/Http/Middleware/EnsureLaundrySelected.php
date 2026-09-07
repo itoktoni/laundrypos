@@ -16,6 +16,9 @@ class EnsureLaundrySelected
         $user = $request->user();
 
         if ($user === null) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Unauthenticated'], 401);
+            }
             return redirect()->route('login');
         }
 
@@ -28,6 +31,10 @@ class EnsureLaundrySelected
                     session(['laundry_id' => $laundry->laundry_id]);
 
                     return $next($request);
+                }
+
+                if ($request->expectsJson()) {
+                    return response()->json(['message' => 'Laundry not selected'], 403);
                 }
 
                 return redirect()->route('laundry.picker');
@@ -43,6 +50,10 @@ class EnsureLaundrySelected
 
         if (! $isMember) {
             session()->forget('laundry_id');
+
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Laundry not selected'], 403);
+            }
 
             return redirect()->route('laundry.picker');
         }

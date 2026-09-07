@@ -48,19 +48,19 @@
                     <div class="border border-outline-variant rounded-xl p-4 bg-surface-container-lowest shadow-sm" data-id="{{ $table->field_primary }}">
                         <p class="text-sm font-bold text-on-surface truncate mb-3">{{ $table->product_nama }}</p>
                         <div class="grid grid-cols-2 gap-3 mb-3">
-                            <div>
+                            <div class="text-left">
                                 <p class="text-[10px] text-on-surface-variant uppercase tracking-wide mb-0.5">Kategori</p>
                                 <p class="text-xs font-medium text-primary truncate">{{ $table->hasKategori?->kategori_nama ?? '-' }}</p>
                             </div>
-                            <div>
+                            <div class="text-right">
                                 <p class="text-[10px] text-on-surface-variant uppercase tracking-wide mb-0.5">Satuan</p>
                                 <p class="text-xs font-medium text-on-surface">{{ $table->product_satuan?->description ?? $table->product_satuan }}</p>
                             </div>
-                            <div>
+                            <div class="text-left">
                                 <p class="text-[10px] text-on-surface-variant uppercase tracking-wide mb-0.5">Harga</p>
                                 <p class="text-xs font-medium text-on-surface">{{ formatAngka($table->product_harga_dasar) }}</p>
                             </div>
-                            <div>
+                            <div class="text-right">
                                 <p class="text-[10px] text-on-surface-variant uppercase tracking-wide mb-0.5">Status</p>
                                 <p class="text-xs font-medium text-on-surface">
                                     <span class="badge {{ $table->product_is_aktif ? 'badge-success' : 'badge-error' }}">

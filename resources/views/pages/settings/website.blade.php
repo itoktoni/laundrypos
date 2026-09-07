@@ -187,6 +187,34 @@
                         </div>
                     </div>
                 </div>
+
+                {{-- Store Location (untuk absensi 50m) --}}
+                <div class="md:col-span-2">
+                    <div class="border border-outline-variant rounded-xl p-4 bg-surface">
+                        <div class="flex items-center gap-3 mb-3">
+                            <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center"><span class="material-symbols-outlined text-primary">location_on</span></div>
+                            <div>
+                                <p class="text-sm font-semibold text-on-surface">Lokasi Toko (Absensi)</p>
+                                <p class="text-xs text-on-surface-variant">Jika laundry belum set koordinat, pakai config ini. Radius default 50 m — check-in/out valid jika ≤ radius.</p>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-on-surface mb-1">Latitude</label>
+                                <input type="text" name="store_latitude" value="{{ old('store_latitude', $settings['store_latitude'] ?? config('website.store_latitude', '-6.2000000')) }}" class="w-full border border-outline-variant rounded-lg px-3 py-2 bg-surface text-on-surface focus:border-primary focus:ring-1 focus:ring-primary text-sm font-mono" placeholder="-6.2000000">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-on-surface mb-1">Longitude</label>
+                                <input type="text" name="store_longitude" value="{{ old('store_longitude', $settings['store_longitude'] ?? config('website.store_longitude', '106.8166660')) }}" class="w-full border border-outline-variant rounded-lg px-3 py-2 bg-surface text-on-surface focus:border-primary focus:ring-1 focus:ring-primary text-sm font-mono" placeholder="106.8166660">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-on-surface mb-1">Radius (meter)</label>
+                                <input type="number" name="store_radius" min="10" max="1000" value="{{ old('store_radius', $settings['store_radius'] ?? config('website.store_radius', 50)) }}" class="w-full border border-outline-variant rounded-lg px-3 py-2 bg-surface text-on-surface focus:border-primary focus:ring-1 focus:ring-primary text-sm">
+                            </div>
+                        </div>
+                        <p class="text-xs text-on-surface-variant mt-2">Lihat <a href="https://maps.google.com" target="_blank" class="text-primary hover:underline">Google Maps</a> untuk koordinat — klik kanan → copy coordinates. Per laundry juga bisa di-set via DB `laundry_latitude/longitude`.</p>
+                    </div>
+                </div>
             </div>
 
             <div class="flex items-center gap-3 pt-4 border-t border-outline-variant">

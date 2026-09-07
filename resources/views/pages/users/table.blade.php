@@ -50,21 +50,29 @@
                     <div class="border border-outline-variant rounded-xl p-4 bg-surface-container-lowest shadow-sm" data-id="{{ $table->field_primary }}">
                         <p class="text-sm font-bold text-on-surface truncate mb-3">{{ $table->name }}</p>
                         <div class="grid grid-cols-2 gap-3 mb-3">
-                            <div>
+                            <div class="text-left">
                                 <p class="text-[10px] text-on-surface-variant uppercase tracking-wide mb-0.5">Email</p>
                                 <p class="text-xs font-medium text-primary truncate">{{ $table->email }}</p>
                             </div>
-                            <div>
+                            <div class="text-right">
                                 <p class="text-[10px] text-on-surface-variant uppercase tracking-wide mb-0.5">Phone</p>
                                 <p class="text-xs font-medium text-on-surface">{{ $table->phone ?? '-' }}</p>
                             </div>
-                            <div>
+                            <div class="text-left">
                                 <p class="text-[10px] text-on-surface-variant uppercase tracking-wide mb-0.5">Role</p>
                                 <p class="text-xs font-medium text-on-surface">{{ $table->role ?? '-' }}</p>
                             </div>
-                            <div>
+                            <div class="text-right">
                                 <p class="text-[10px] text-on-surface-variant uppercase tracking-wide mb-0.5">ID</p>
                                 <p class="text-xs font-medium text-on-surface">{{ $table->id }}</p>
+                            </div>
+                            <div class="text-left">
+                                <p class="text-[10px] text-on-surface-variant uppercase tracking-wide mb-0.5">Gaji Pokok</p>
+                                <p class="text-xs font-medium text-on-surface">Rp&nbsp;{{ formatQty($table->gaji_pokok) }}</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-[10px] text-on-surface-variant uppercase tracking-wide mb-0.5">Potongan/Hari</p>
+                                <p class="text-xs font-medium text-on-surface">Rp&nbsp;{{ formatQty($table->gaji_absensi) }}</p>
                             </div>
                         </div>
                         <div class="flex items-center justify-between pt-2 border-t border-outline-variant/50">

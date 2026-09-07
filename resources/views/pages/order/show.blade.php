@@ -32,9 +32,9 @@
             </div>
 
             <div class="flex flex-wrap gap-2 print:hidden">
-                <a href="{{ route('order.strukpdf', ['id' => $order->order_id]) }}" class="btn btn-sm btn-outline">Struk PDF</a>
-                <a href="{{ route('order.print', ['id' => $order->order_id, 'mode' => 'browser']) }}" target="_blank" class="btn btn-sm btn-outline">Print A5</a>
-                <a href="{{ route('order.print', ['id' => $order->order_id, 'mode' => 'thermal']) }}" target="_blank" class="btn btn-sm btn-outline">Thermal 80mm</a>
+                <a href="{{ route('order.getStrukPdf', ['id' => $order->order_id]) }}" class="btn btn-sm btn-outline">Struk PDF</a>
+                <a href="{{ route('order.getPrint', ['id' => $order->order_id, 'mode' => 'browser']) }}" target="_blank" class="btn btn-sm btn-outline">Print A5</a>
+                <a href="{{ route('order.getPrint', ['id' => $order->order_id, 'mode' => 'thermal']) }}" target="_blank" class="btn btn-sm btn-outline">Thermal 80mm</a>
             </div>
         </div>
 
@@ -48,7 +48,7 @@
                     @php($isNext = $stepIndex === $currentIndex + 1)
                     @php($isPrev = $stepIndex === $currentIndex - 1 && $prevStatus)
                     @if ($isNext || $isPrev)
-                        <form method="POST" action="{{ route('order.transit', ['id' => $order->order_id]) }}" class="contents">
+                        <form method="POST" action="{{ route('order.postTransit', ['id' => $order->order_id]) }}" class="contents">
                             @csrf
                             <input type="hidden" name="order_status_id" value="{{ $step->getKey() }}">
                             <li class="flex items-center gap-2 rounded-lg px-3 py-2 text-xs cursor-pointer transition hover:ring-2
@@ -87,7 +87,7 @@
                     @php($isPrev = $stepIndex === $currentIndex - 1 && $prevStatus)
                     <li class="flex items-center shrink-0 {{ ! $loop->last ? 'flex-1 min-w-[96px]' : '' }}">
                         @if ($isNext || $isPrev)
-                            <form method="POST" action="{{ route('order.transit', ['id' => $order->order_id]) }}" class="contents">
+                            <form method="POST" action="{{ route('order.postTransit', ['id' => $order->order_id]) }}" class="contents">
                                 @csrf
                                 <input type="hidden" name="order_status_id" value="{{ $step->getKey() }}">
                                 <button type="submit" class="flex flex-col items-center text-center gap-1.5 px-1 cursor-pointer group">
@@ -212,7 +212,7 @@
                         <h2 class="font-semibold text-sm mb-3">Perbarui Status</h2>
                         <div class="space-y-2">
                             @if ($nextStatus)
-                                <form method="POST" action="{{ route('order.transit', ['id' => $order->order_id]) }}">
+                                <form method="POST" action="{{ route('order.postTransit', ['id' => $order->order_id]) }}">
                                     @csrf
                                     <input type="hidden" name="order_status_id" value="{{ $nextStatus->getKey() }}">
                                     <button type="submit" class="btn btn-primary w-full">
@@ -222,7 +222,7 @@
                             @endif
 
                             @if ($prevStatus)
-                                <form method="POST" action="{{ route('order.transit', ['id' => $order->order_id]) }}">
+                                <form method="POST" action="{{ route('order.postTransit', ['id' => $order->order_id]) }}">
                                     @csrf
                                     <input type="hidden" name="order_status_id" value="{{ $prevStatus->getKey() }}">
                                     <button type="submit" class="btn btn-outline btn-warning w-full">
@@ -239,7 +239,7 @@
                         @if ($cancelStatus && ($nextStatus || $prevStatus))
                             <details class="mt-2">
                                 <summary class="text-xs text-error cursor-pointer select-none">Batalkan order…</summary>
-                                <form method="POST" action="{{ route('order.transit', ['id' => $order->order_id]) }}" class="mt-2 space-y-2">
+                                <form method="POST" action="{{ route('order.postTransit', ['id' => $order->order_id]) }}" class="mt-2 space-y-2">
                                     @csrf
                                     <input type="hidden" name="order_status_id" value="{{ $cancelStatus->getKey() }}">
                                     <textarea name="keterangan" required maxlength="255" rows="2" placeholder="Alasan pembatalan (wajib)" class="textarea w-full text-sm"></textarea>

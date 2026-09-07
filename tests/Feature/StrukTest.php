@@ -49,7 +49,7 @@ it('downloads struk pdf', function () {
     [$user, $order] = strukFixture();
 
     $response = $this->actingAs($user)->withSession(['laundry_id' => Laundry::first()->laundry_id])
-        ->get(route('order.strukpdf', ['id' => $order->getKey()]));
+        ->get(route('order.getStrukPdf', ['id' => $order->getKey()]));
 
     $response->assertOk();
     expect($response->headers->get('content-type'))->toContain('pdf');
@@ -60,7 +60,7 @@ it('prints in browser and thermal modes', function () {
 
     foreach (['browser', 'thermal'] as $mode) {
         $this->actingAs($user)->withSession(['laundry_id' => Laundry::first()->laundry_id])
-            ->get(route('order.print', ['id' => $order->getKey(), 'mode' => $mode]))
+            ->get(route('order.getPrint', ['id' => $order->getKey(), 'mode' => $mode]))
             ->assertOk()
             ->assertSee($order->order_code);
     }

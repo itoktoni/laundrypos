@@ -97,7 +97,7 @@
                 </div>
 
                 {{-- Sticky action --}}
-                <div class="sticky bottom-4 md:bottom-6 mt-6 bg-surface-container-lowest border border-outline-variant rounded-2xl p-3 md:p-4 flex items-center gap-3 shadow-lg">
+                <div class="sticky bottom-20 md:bottom-6 mt-6 bg-surface-container-lowest border border-outline-variant rounded-2xl p-3 md:p-4 flex items-center gap-3 shadow-lg">
                     <div class="flex-1 min-w-0">
                         <p class="text-xs text-on-surface-variant">Cabang terpilih</p>
                         <p id="selected-name" class="text-sm font-semibold text-on-surface truncate">Belum memilih</p>

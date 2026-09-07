@@ -37,6 +37,9 @@ class WebsiteSettingController extends Controller
             'offline_enabled' => ['nullable', 'boolean'],
             'staff_target' => ['nullable', 'integer', 'min:1', 'max:10000'],
             'staff_fee' => ['nullable', 'integer', 'min:0', 'max:1000000'],
+            'store_latitude' => ['nullable', 'numeric', 'between:-90,90'],
+            'store_longitude' => ['nullable', 'numeric', 'between:-180,180'],
+            'store_radius' => ['nullable', 'integer', 'min:10', 'max:1000'],
         ]);
 
         $existing = WebsiteSetting::raw();
@@ -74,6 +77,9 @@ class WebsiteSettingController extends Controller
         $validated['offline_enabled'] = $request->boolean('offline_enabled');
         $validated['staff_target'] = $request->integer('staff_target') ?: ($existing['staff_target'] ?? config('website.staff_target', 100));
         $validated['staff_fee'] = $request->integer('staff_fee') ?: ($existing['staff_fee'] ?? config('website.staff_fee', 1000));
+        $validated['store_latitude'] = $request->input('store_latitude', $existing['store_latitude'] ?? config('website.store_latitude'));
+        $validated['store_longitude'] = $request->input('store_longitude', $existing['store_longitude'] ?? config('website.store_longitude'));
+        $validated['store_radius'] = $request->integer('store_radius') ?: ($existing['store_radius'] ?? config('website.store_radius', 50));
         unset($validated['primary_color'], $validated['remove_logo'], $validated['remove_favicon']);
 
         $merged = array_merge($existing, $validated, ['colors' => $colors]);

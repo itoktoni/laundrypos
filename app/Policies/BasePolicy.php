@@ -13,7 +13,15 @@ class BasePolicy
 
     public function __construct()
     {
-        $this->module = request()->route()->getAction('name');
+        // ponytail: manual routes lack action 'name'; fall back to first
+        // segment of route name so restrictions apply per module.
+        $route = request()->route();
+        $module = $route?->getAction('name');
+        if (empty($module)) {
+            $routeName = $route?->getName() ?? '';
+            $module = $routeName !== '' ? explode('.', $routeName)[0] : null;
+        }
+        $this->module = $module;
         $this->restrict = config('permision');
     }
 

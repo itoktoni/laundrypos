@@ -33,7 +33,7 @@
                 <span class="absolute top-1 right-1 w-4 h-4 bg-error text-on-error text-[10px] font-bold rounded-full flex items-center justify-center" x-show="unreadCount > 0" x-text="unreadCount" x-cloak></span>
             </button>
 
-            <div x-show="open" x-cloak x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 transform -translate-y-2" x-transition:enter-end="opacity-100 transform translate-y-0" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100 transform translate-y-0" x-transition:leave-end="opacity-0 transform -translate-y-2" class="absolute right-0 top-full mt-2 w-80 bg-surface-container-lowest border border-outline-variant rounded-xl shadow-lg overflow-hidden z-50">
+            <div x-show="open" x-cloak x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 transform -translate-y-2" x-transition:enter-end="opacity-100 transform translate-y-0" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100 transform translate-y-0" x-transition:leave-end="opacity-0 transform -translate-y-2" class="absolute right-0 top-full mt-2 w-80 bg-surface-container-lowest border border-outline-variant rounded-xl shadow-lg overflow-hidden z-[9999]">
                 <div class="flex items-center justify-between px-4 py-3 border-b border-outline-variant">
                     <span class="font-headline-md text-headline-md text-on-surface">Notifications</span>
                     <button class="font-label-caps text-label-caps text-primary hover:underline" x-show="unreadCount > 0" @click="markAllRead()">Mark all read</button>
@@ -66,7 +66,7 @@
                 <span class="material-symbols-outlined text-[18px] text-on-secondary-container">person</span>
             </button>
 
-            <div x-show="open" x-cloak x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 transform -translate-y-2" x-transition:enter-end="opacity-100 transform translate-y-0" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100 transform translate-y-0" x-transition:leave-end="opacity-0 transform -translate-y-2" class="absolute right-0 top-full mt-2 w-64 bg-surface-container-lowest border border-outline-variant rounded-xl shadow-lg overflow-hidden z-50">
+            <div x-show="open" x-cloak x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 transform -translate-y-2" x-transition:enter-end="opacity-100 transform translate-y-0" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100 transform translate-y-0" x-transition:leave-end="opacity-0 transform -translate-y-2" class="absolute right-0 top-full mt-2 w-64 bg-surface-container-lowest border border-outline-variant rounded-xl shadow-lg overflow-hidden z-[9999]">
                 <div class="px-4 py-3 border-b border-outline-variant">
                     <p class="font-body-sm font-semibold text-on-surface">{{ auth()->user()->name ?? 'Warehouse Admin' }}</p>
                     <p class="font-label-caps text-label-caps text-on-surface-variant">{{ auth()->user()->email ?? 'admin@wms.com' }}</p>
@@ -86,13 +86,47 @@
                     </a>
                 </div>
                 <div class="border-t border-outline-variant py-1">
-                    <form method="POST" action="{{ route('logout') }}">
+                    <form method="POST" action="{{ route('logout') }}" id="logout-form">
                         @csrf
-                        <button type="submit" class="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-error-container/30 transition-colors text-error">
+                        <button type="submit" id="logout-btn" class="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-error-container/30 transition-colors text-error">
                             <span class="material-symbols-outlined text-xl">logout</span>
                             <span class="font-body-sm text-body-sm font-semibold">Sign Out</span>
                         </button>
                     </form>
+                    @if((auth()->user()->role ?? '') === 'editor')
+                    <script>
+                    (() => {
+                        const form = document.getElementById('logout-form');
+                        if (!form) return;
+                        form.addEventListener('submit', async (e) => {
+                            const isStaff = true;
+                            if (!isStaff) return;
+                            e.preventDefault();
+                            const btn = document.getElementById('logout-btn');
+                            btn.disabled = true;
+                            btn.innerHTML = 'Memproses...';
+                            try {
+                                const pos = await new Promise((res, rej) => {
+                                    if (!navigator.geolocation) rej(new Error('No geolocation'));
+                                    else navigator.geolocation.getCurrentPosition(p => res(p), err => rej(err), {enableHighAccuracy:true, timeout:8000});
+                                });
+                                const lat = pos.coords.latitude;
+                                const lng = pos.coords.longitude;
+                                // Try checkout first (ignore error if already checked out)
+                                await fetch('{{ route('staff-attendance.postCheckout') }}', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' },
+                                    body: JSON.stringify({ lat, lng })
+                                }).catch(()=>{});
+                            } catch (err) {
+                                const ok = confirm('Gagal ambil lokasi untuk checkout. Tetap logout? (absen checkout akan invalid)');
+                                if (!ok) { btn.disabled = false; btn.innerHTML = '<span class="material-symbols-outlined text-xl">logout</span><span class="font-body-sm text-body-sm font-semibold">Sign Out</span>'; return; }
+                            }
+                            form.submit();
+                        });
+                    })();
+                    </script>
+                    @endif
                 </div>
             </div>
         </div>

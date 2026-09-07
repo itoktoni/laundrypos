@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-#[Fillable(['laundry_nama', 'laundry_kode', 'laundry_alamat', 'laundry_telepon', 'laundry_is_aktif'])]
+#[Fillable(['laundry_nama', 'laundry_kode', 'laundry_alamat', 'laundry_telepon', 'laundry_is_aktif', 'laundry_latitude', 'laundry_longitude', 'laundry_radius_m'])]
 class Laundry extends BaseModel
 {
     protected $table = 'laundry';

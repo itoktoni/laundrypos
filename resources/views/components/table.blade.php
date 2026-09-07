@@ -1,7 +1,7 @@
 @props(['empty' => 'No data found.'])
 <div class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden form-card">
     <div class="p-0">
-        @desktop()
+        {{-- Desktop: visible lg and up --}}
         <div class="hidden lg:block overflow-x-auto">
             <table class="w-full border-collapse">
                 <thead>
@@ -14,13 +14,26 @@
                 </tbody>
             </table>
         </div>
-        @enddesktop()
 
-        @mobile
-        @if(isset($mobile))
-        <div class="lg:hidden">{{ $mobile }}</div>
-        @endif
-        @endmobile()
+        {{-- Mobile: visible below lg — pure CSS breakpoint, no server UA sniff --}}
+        @isset($mobile)
+            <div class="lg:hidden">{{ $mobile }}</div>
+        @else
+            {{-- Fallback: responsive card-like view via same data (avoid blank). Will be overridden once page defines <x-slot:mobile> --}}
+            <div class="lg:hidden overflow-x-auto">
+                <table class="w-full border-collapse">
+                    <thead>
+                        <tr class="border-b-2 border-outline-variant bg-surface-container">
+                            {{ $head }}
+                        </tr>
+                    </thead>
+                    <tbody class="[&>tr]:border-b [&>tr]:border-outline-variant/50 [&>tr:last-child]:border-b-0 [&>tr]:hover:bg-surface-container-low/50">
+                        {{ $body }}
+                    </tbody>
+                </table>
+            </div>
+            <p class="lg:hidden text-[10px] text-center text-on-surface-variant/60 py-2">* Belum ada tampilan card mobile — tambahkan &lt;x-slot:mobile&gt; untuk UX optimal</p>
+        @endisset
     </div>
 </div>
 <style>

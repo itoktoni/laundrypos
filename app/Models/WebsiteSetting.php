@@ -45,6 +45,9 @@ class WebsiteSetting
             'offline_enabled' => filter_var(env('WEBSITE_OFFLINE_ENABLED', config('website.offline_enabled', true)), FILTER_VALIDATE_BOOLEAN),
             'staff_target' => (int) env('STAFF_TARGET_MONTHLY', config('website.staff_target', 100)),
             'staff_fee' => (int) env('STAFF_FEE_PER_ORDER', config('website.staff_fee', 1000)),
+            'store_latitude' => env('STORE_LATITUDE', config('website.store_latitude', '-6.2000000')),
+            'store_longitude' => env('STORE_LONGITUDE', config('website.store_longitude', '106.8166660')),
+            'store_radius' => (int) env('STORE_RADIUS_M', config('website.store_radius', 50)),
         ];
     }
 
@@ -92,6 +95,15 @@ class WebsiteSetting
         if (array_key_exists('staff_fee', $data)) {
             $map['STAFF_FEE_PER_ORDER'] = (string) (int) $data['staff_fee'];
         }
+        if (array_key_exists('store_latitude', $data)) {
+            $map['STORE_LATITUDE'] = (string) $data['store_latitude'];
+        }
+        if (array_key_exists('store_longitude', $data)) {
+            $map['STORE_LONGITUDE'] = (string) $data['store_longitude'];
+        }
+        if (array_key_exists('store_radius', $data)) {
+            $map['STORE_RADIUS_M'] = (string) (int) $data['store_radius'];
+        }
 
         if (! empty($map)) {
             static::putEnv($map);
@@ -137,6 +149,15 @@ class WebsiteSetting
         }
         if (isset($map['STAFF_FEE_PER_ORDER'])) {
             config(['website.staff_fee' => (int) $map['STAFF_FEE_PER_ORDER']]);
+        }
+        if (isset($map['STORE_LATITUDE'])) {
+            config(['website.store_latitude' => $map['STORE_LATITUDE']]);
+        }
+        if (isset($map['STORE_LONGITUDE'])) {
+            config(['website.store_longitude' => $map['STORE_LONGITUDE']]);
+        }
+        if (isset($map['STORE_RADIUS_M'])) {
+            config(['website.store_radius' => (int) $map['STORE_RADIUS_M']]);
         }
     }
 

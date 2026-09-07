@@ -38,6 +38,10 @@ function getCsrfToken() {
     return document.querySelector('meta[name="csrf-token"]')?.content;
 }
 
+function isAuthenticated() {
+    return !!document.querySelector('meta[name="user-id"]')?.content;
+}
+
 async function apiRequest(path, options = {}) {
     const headers = {
         'Content-Type': 'application/json',
@@ -54,6 +58,11 @@ async function apiRequest(path, options = {}) {
     });
 
     if (!response.ok) {
+        if (response.status === 401) {
+            const err = new Error('Unauthenticated');
+            err.status = 401;
+            throw err;
+        }
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.message || `API error: ${response.status} ${response.statusText}`);
     }
@@ -121,6 +130,9 @@ export async function syncAll() {
     if (!isOnline()) {
         return { success: false, reason: 'offline' };
     }
+    if (!isAuthenticated()) {
+        return { success: false, reason: 'unauthenticated' };
+    }
 
     try {
         const pushResult = await pushOrders();
@@ -136,6 +148,9 @@ export async function syncAll() {
             timestamp: new Date().toISOString(),
         };
     } catch (error) {
+        if (error.status === 401) {
+            return { success: false, reason: 'unauthenticated' };
+        }
         console.error('Sync failed:', error);
         return { success: false, error: error.message };
     }
@@ -144,17 +159,19 @@ export async function syncAll() {
 let syncInterval = null;
 
 export function startAutoSync(intervalMs = 5 * 60 * 1000) {
+    if (!isAuthenticated()) return;
     if (isOnline()) {
         syncAll().catch(console.error);
     }
 
     window.addEventListener('online', () => {
+        if (!isAuthenticated()) return;
         console.log('Connection restored, syncing...');
         syncAll().catch(console.error);
     });
 
     syncInterval = setInterval(() => {
-        if (isOnline()) {
+        if (isOnline() && isAuthenticated()) {
             syncAll().catch(console.error);
         }
     }, intervalMs);

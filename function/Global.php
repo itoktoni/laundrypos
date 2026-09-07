@@ -111,7 +111,17 @@ function unicNumber($length)
 
 function modules($action = null)
 {
-    $module = request()->route()->getAction('name');
+    $route = request()->route();
+    $module = $route?->getAction('name');
+
+    // ponytail: manual Route::get()->name() has no action 'name' (only
+    // auto-route sets it); fall back to first segment of route name,
+    // e.g. inventory.getKartuStok -> inventory, so moduleRoute('getTable')
+    // resolves to inventory.getTable instead of '.getTable'.
+    if (empty($module)) {
+        $routeName = $route?->getName() ?? '';
+        $module = $routeName !== '' ? explode('.', $routeName)[0] : '';
+    }
 
     if ($action) {
         return $module.'.'.$action;

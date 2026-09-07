@@ -11,6 +11,8 @@
                 <x-input col="6" name="email" />
                 <x-input col="6" type="password" name="password" />
                 <x-select col="6" name="role" :options="$role"/>
+                <x-input col="6" type="number" name="gaji_pokok" label="Gaji Pokok (Rp)" />
+                <x-input col="6" type="number" name="gaji_absensi" label="Potongan / Hari Absen (Rp)" />
 
                 <x-file
                     name="avatar"

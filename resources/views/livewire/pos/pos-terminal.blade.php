@@ -3,9 +3,9 @@ use App\Livewire\Pos\PosTerminal;
 
 /** @var PosTerminal $this */ ?>
 
-<div class="flex flex-col gap-4">
+<div class="flex flex-col gap-4" x-data="{ posTab: 'belanja' }" :class="posTab === 'belanja' ? 'max-lg:h-[calc(100svh-12rem-env(safe-area-inset-bottom))] max-lg:overflow-hidden' : ''">
     {{-- Top bar: customer selector (redesigned searchable) --}}
-    <div class="flex items-center gap-3">
+    <div class="flex items-center gap-3 max-lg:shrink-0">
         <div class="flex-1 max-w-md" x-data="{
                 open: false,
                 q: '',
@@ -70,9 +70,26 @@ use App\Livewire\Pos\PosTerminal;
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 max-lg:flex-1 max-lg:min-h-0 max-lg:flex max-lg:flex-col">
+    {{-- Mobile tabs: Belanja | Checkout --}}
+    <div class="lg:hidden flex gap-1 p-1 rounded-2xl bg-surface-container border border-outline-variant shrink-0 sticky top-16 z-30">
+        <button type="button" @click="posTab = 'belanja'"
+                :class="posTab === 'belanja' ? 'bg-primary text-on-primary shadow-sm' : 'text-on-surface-variant'"
+                class="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-sm font-bold transition-colors">
+            <span class="material-symbols-outlined text-[18px]">storefront</span> Belanja
+        </button>
+        <button type="button" @click="posTab = 'checkout'"
+                :class="posTab === 'checkout' ? 'bg-primary text-on-primary shadow-sm' : 'text-on-surface-variant'"
+                class="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl transition-colors">
+            <span class="material-symbols-outlined text-[18px]">shopping_cart</span>
+            <span class="text-left leading-tight">
+                <span class="block text-[10px] opacity-80">Checkout &bull; {{ count($cart) }} item</span>
+                <span class="block text-sm font-bold">Rp&nbsp;{{ formatAngka($this->total) }}</span>
+            </span>
+        </button>
+    </div>
     {{-- Left panel: kategori tabs + product grid --}}
-    <div class="lg:col-span-2 flex flex-col min-h-0" x-data="{ view: localStorage.getItem('pos_view') || 'grid' }" x-init="$watch('view', v => localStorage.setItem('pos_view', v))">
+    <div :class="posTab === 'checkout' ? 'hidden lg:flex' : 'flex'" class="lg:col-span-2 flex-col min-h-0 max-lg:flex-1 max-lg:min-h-0" x-data="{ view: localStorage.getItem('pos_view') || 'grid' }" x-init="$watch('view', v => localStorage.setItem('pos_view', v))">
         {{-- Kategori tabs --}}
         <div class="flex gap-2 mb-3 overflow-x-auto pb-2 shrink-0">
             <button wire:click="$set('activeKategoriId', null)"
@@ -105,7 +122,7 @@ use App\Livewire\Pos\PosTerminal;
 
         {{-- Product grid — scrollable --}}
         <div :class="view === 'list' ? 'grid grid-cols-1 gap-2' : 'grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2'"
-             class="overflow-y-auto max-h-[calc(100vh-20rem)] pb-20 md:pb-4">
+             class="overflow-y-auto pb-4 max-lg:flex-1 max-lg:min-h-0 lg:max-h-[calc(100vh-20rem)]">
             @forelse ($products as $product)
                 <button type="button" wire:click="addToCart({{ $product->product_id }})"
                         class="border border-outline-variant rounded-xl px-3 py-3 text-left bg-surface-container-lowest hover:bg-surface-container hover:shadow-md hover:border-primary/20 transition shadow-sm"
@@ -119,10 +136,10 @@ use App\Livewire\Pos\PosTerminal;
         </div>
     </div>
 
-    {{-- Right panel: cart --}}
-    <div class="border border-outline-variant rounded-xl p-4 bg-surface-container-lowest shadow-sm h-fit">
-        <h3 class="font-bold mb-3">Keranjang</h3>
-
+    {{-- Right panel: checkout — own tab on mobile, side panel on desktop --}}
+    <div :class="posTab !== 'checkout' ? 'hidden lg:block' : ''" class="border border-outline-variant rounded-xl p-4 bg-surface-container-lowest shadow-sm h-fit">
+        <h3 class="font-bold mb-3">Checkout</h3>
+        <div>
         @if (count($errors) > 0)
             <div class="mb-3 p-2 text-xs bg-error-container text-on-error-container rounded-lg">
                 @foreach ($errors as $field => $messages)
@@ -134,26 +151,37 @@ use App\Livewire\Pos\PosTerminal;
         @endif
 
         {{-- Cart lines --}}
-        <div class="space-y-2 mb-4 max-h-64 overflow-y-auto">
+        <div class="space-y-2 mb-3">
             @forelse ($cart as $i => $line)
-                <div class="flex items-center gap-2 border-b border-outline-variant/50 pb-2">
+                <div class="flex items-center gap-2 rounded-2xl border border-outline-variant/60 bg-surface-container-lowest p-2.5">
                     <div class="flex-1 min-w-0">
-                        <p class="text-sm font-medium truncate">{{ $line['nama'] }}</p>
-                        <p class="text-xs text-on-surface-variant">{{ formatAngka($line['harga']) }} / {{ $line['satuan'] }}</p>
+                        <p class="text-sm font-bold truncate">{{ $line['nama'] }}</p>
+                        <p class="text-[11px] text-on-surface-variant">{{ formatAngka($line['harga']) }} / {{ $line['satuan'] }}</p>
+                        <p class="text-sm font-bold text-primary mt-0.5">{{ formatAngka($line['harga'] * $line['qty']) }}</p>
                     </div>
-                    <div class="flex items-center gap-1">
-                        <button type="button" wire:click="bumpQty({{ $i }}, -1)" class="btn btn-xs">−</button>
-                        <span class="w-8 text-center text-sm">{{ $line['qty'] }}</span>
-                        <button type="button" wire:click="bumpQty({{ $i }}, 1)" class="btn btn-xs">+</button>
+                    <div class="flex flex-col items-end gap-1.5 shrink-0">
+                        <button type="button" wire:click="removeLine({{ $i }})" class="w-7 h-7 rounded-full hover:bg-error/10 text-on-surface-variant hover:text-error flex items-center justify-center transition-colors" title="Hapus">
+                            <span class="material-symbols-outlined text-[16px]">close</span>
+                        </button>
+                        <div class="flex items-center gap-0.5 rounded-full border border-outline-variant p-0.5">
+                            <button type="button" wire:click="bumpQty({{ $i }}, -1)" class="w-7 h-7 rounded-full bg-surface-container hover:bg-outline-variant flex items-center justify-center text-base font-bold transition-colors">&minus;</button>
+                            <span class="w-6 text-center text-sm font-bold">{{ $line['qty'] }}</span>
+                            <button type="button" wire:click="bumpQty({{ $i }}, 1)" class="w-7 h-7 rounded-full bg-primary text-on-primary hover:bg-primary/90 flex items-center justify-center text-base font-bold transition-colors">+</button>
+                        </div>
                     </div>
-                    <p class="w-20 text-right text-sm font-medium">{{ formatAngka($line['harga'] * $line['qty']) }}</p>
-                    <button type="button" wire:click="removeLine({{ $i }})" class="text-error text-xs">×</button>
                 </div>
             @empty
-                <p class="text-sm text-on-surface-variant">Keranjang kosong.</p>
+                <div class="flex flex-col items-center gap-2 py-8 text-center">
+                    <span class="w-14 h-14 rounded-full bg-surface-container flex items-center justify-center">
+                        <span class="material-symbols-outlined text-[28px] text-on-surface-variant">shopping_cart</span>
+                    </span>
+                    <p class="text-sm font-medium text-on-surface">Keranjang kosong</p>
+                    <p class="text-xs text-on-surface-variant">Ketuk produk untuk menambah</p>
+                </div>
             @endforelse
         </div>
 
+        <div class="shrink-0 max-lg:sticky max-lg:bottom-16 max-lg:z-40 max-lg:bg-surface-container-lowest max-lg:border-t max-lg:border-outline-variant max-lg:p-4 max-lg:rounded-t-2xl max-lg:shadow-[0_-8px_24px_rgba(0,0,0,0.12)] md:max-lg:bottom-0">
         {{-- Promo --}}
         <div class="mb-4">
             <label class="text-xs text-on-surface-variant mb-1 block">Promo</label>
@@ -189,27 +217,28 @@ use App\Livewire\Pos\PosTerminal;
         </div>
 
         {{-- Totals --}}
-        <div class="border-t border-outline-variant pt-3 space-y-1 text-sm">
-            <div class="flex justify-between"><span>Subtotal</span><span>{{ formatAngka($this->subtotal) }}</span></div>
+        <div class="rounded-2xl bg-primary/5 border border-primary/15 p-3 space-y-1 text-sm mb-3">
+            <div class="flex justify-between text-on-surface-variant"><span>Subtotal</span><span>{{ formatAngka($this->subtotal) }}</span></div>
             @if ($discountAmount > 0)
                 <div class="flex justify-between text-success"><span>Diskon ({{ $discountNama }})</span><span>-{{ formatAngka($discountAmount) }}</span></div>
             @endif
-            <div class="flex justify-between font-bold text-base pt-1"><span>Total</span><span>{{ formatAngka($this->total) }}</span></div>
+            <div class="flex justify-between items-end pt-1"><span class="font-bold">Total</span><span class="text-2xl font-bold text-primary">{{ formatAngka($this->total) }}</span></div>
         </div>
 
         {{-- Action buttons --}}
-        <div class="flex gap-2 mt-4">
+        <div class="flex gap-2">
             <button type="button" wire:click="confirmCash" wire:loading.attr="disabled"
-                    class="flex-1 inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl font-semibold text-sm border bg-success text-white border-success/20 hover:bg-success/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors" @disabled(count($cart) === 0)>
-                <span class="material-symbols-outlined text-[18px]">payments</span> CASH
+                    class="flex-1 inline-flex items-center justify-center gap-1.5 px-4 py-3 rounded-2xl font-bold text-[15px] border bg-success text-white border-success/20 hover:bg-success/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors" @disabled(count($cart) === 0)>
+                <span class="material-symbols-outlined text-[20px]">payments</span> CASH
             </button>
             <button type="button" wire:click="confirmOrder" wire:loading.attr="disabled"
-                    class="btn btn-primary flex-1 inline-flex items-center justify-center gap-1.5" @disabled(count($cart) === 0)>
-                <span class="material-symbols-outlined text-[18px]">qr_code</span> Bayar
+                    class="btn btn-primary flex-1 inline-flex items-center justify-center gap-1.5 !py-3 !rounded-2xl !text-[15px]" @disabled(count($cart) === 0)>
+                <span class="material-symbols-outlined text-[20px]">qr_code</span> Bayar
             </button>
         </div>
-        <p class="text-[11px] text-center text-on-surface-variant mt-1.5">CASH = bayar tunai sesuai nominal (tanpa QRIS)</p>
+        </div>
     </div>
+</div>
 </div>
 
 {{-- Cash Success Modal --}}

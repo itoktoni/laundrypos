@@ -13,17 +13,9 @@ class LaundryController extends Controller
     {
         $role = Auth::user()->role ?? '';
 
-        // Owner: auto-select first active laundry, skip picker.
-        if ($role === 'owner') {
-            $laundry = Laundry::where('laundry_is_aktif', true)->first();
-
-            if ($laundry) {
-                session(['laundry_id' => $laundry->laundry_id]);
-
-                return redirect()->route('dashboard');
-            }
-        }
-
+        // ponytail: jangan auto-select di sini — owner yang explisit buka
+        // picker (mis. via "Ganti Cabang") harus bisa pindah cabang.
+        // Auto-select saat session kosong ditangani EnsureLaundrySelected.
         $laundries = $role === 'owner'
             ? Laundry::where('laundry_is_aktif', true)->orderBy('laundry_nama')->get()
             : Laundry::whereIn('laundry_id', $this->pivotIds())->orderBy('laundry_nama')->get();
@@ -39,7 +31,14 @@ class LaundryController extends Controller
             'laundry_id' => ['required', 'integer'],
         ]);
 
-        abort_unless(Laundry::find($validated['laundry_id']), 404);
+        $laundry = Laundry::find($validated['laundry_id']);
+        abort_unless($laundry, 404);
+
+        // ponytail: non-owner hanya boleh pilih cabang anggotanya.
+        $role = Auth::user()->role ?? '';
+        if ($role !== 'owner' && ! in_array($laundry->laundry_id, $this->pivotIds())) {
+            abort(403, 'Bukan anggota cabang ini.');
+        }
 
         session(['laundry_id' => (int) $validated['laundry_id']]);
 

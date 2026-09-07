@@ -20,7 +20,7 @@ class OrderController extends Controller
 
     protected function getData()
     {
-        $query = $this->model->with(['hasItems', 'hasStatus'])->orderByDesc('created_at');
+        $query = $this->model->with(['hasItems', 'hasStatus', 'hasCustomer'])->orderByDesc('created_at');
         // Staff (editor) hanya bisa lihat & edit order miliknya
         if ((auth()->user()->role ?? '') === 'editor') {
             $query->where('order_id_user', auth()->id());

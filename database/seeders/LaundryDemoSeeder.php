@@ -8,9 +8,7 @@ use App\Models\Discount;
 use App\Models\Kategori;
 use App\Models\Laundry;
 use App\Models\Product;
-use App\Models\User;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 
 class LaundryDemoSeeder extends Seeder
 {
@@ -27,7 +25,8 @@ class LaundryDemoSeeder extends Seeder
             ['laundry_nama' => 'Laundry Express 2', 'laundry_alamat' => 'Jl. Melati No. 5, Bekasi', 'laundry_telepon' => '081234567891']
         );
 
-        foreach ([$laundry, $laundry2] as $ld) {
+        // Kategori, produk, customer, diskon untuk SEMUA cabang (idempotent).
+        foreach (Laundry::all() as $ld) {
             $this->seedKategoriProducts($ld);
             $this->seedCustomers($ld);
             $this->seedDiscounts($ld);
@@ -76,7 +75,7 @@ class LaundryDemoSeeder extends Seeder
                     'product_satuan' => $satuan,
                     'product_harga_dasar' => $harga,
                     'product_estimasi_jam' => $jam,
-                    'product_deskripsi' => $nama . ' - ' . $laundry->laundry_nama,
+                    'product_deskripsi' => $nama.' - '.$laundry->laundry_nama,
                     'product_is_aktif' => true,
                 ]
             );
@@ -99,7 +98,7 @@ class LaundryDemoSeeder extends Seeder
         foreach ($customers as [$nama, $telp, $email]) {
             Customer::firstOrCreate(
                 ['customer_telepon' => $telp, 'customer_id_laundry' => $laundry->laundry_id],
-                ['customer_nama' => $nama, 'customer_email' => $email, 'customer_alamat' => 'Jl. Contoh No. ' . rand(1, 100)]
+                ['customer_nama' => $nama, 'customer_email' => $email, 'customer_alamat' => 'Jl. Contoh No. '.rand(1, 100)]
             );
         }
     }

@@ -22,7 +22,7 @@ use Laravel\Sanctum\HasApiTokens;
 /**
  * @mixin IdeHelperUser
  */
-#[Fillable(['name', 'email', 'password', 'role', 'phone', 'avatar', 'verified_at'])]
+#[Fillable(['name', 'email', 'password', 'role', 'phone', 'avatar', 'verified_at', 'gaji_pokok', 'gaji_absensi'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -46,6 +46,8 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'verified_at' => 'datetime',
             'password' => 'hashed',
+            'gaji_pokok' => 'decimal:2',
+            'gaji_absensi' => 'decimal:2',
         ];
     }
 
@@ -64,6 +66,8 @@ class User extends Authenticatable
         'email',
         'phone',
         'role',
+        'gaji_pokok',
+        'gaji_absensi',
     ];
 
     /**
@@ -77,6 +81,8 @@ class User extends Authenticatable
             'role' => 'string',
             'password' => 'string',
             'avatar' => 'nullable|string|max:255',
+            'gaji_pokok' => 'nullable|numeric|min:0|max:9999999999.99',
+            'gaji_absensi' => 'nullable|numeric|min:0|max:9999999999.99',
         ];
     }
 

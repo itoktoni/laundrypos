@@ -34,13 +34,21 @@ async function switchToOnline() {
     currentMode = 'online';
     console.log('Switched to ONLINE mode');
 
-    startAutoSync();
     updateStatusBanner('online');
 
-    const result = await syncAll();
-    console.log('Initial sync result:', result);
-
-    if (onModeChange) onModeChange('online', result);
+    const isAuth = !!document.querySelector('meta[name="user-id"]')?.content;
+    if (isAuth) {
+        startAutoSync();
+        const result = await syncAll();
+        // Jangan spam console jika hanya unauthenticated (halaman login)
+        if (result.reason !== 'unauthenticated') {
+            console.log('Initial sync result:', result);
+        }
+        if (onModeChange) onModeChange('online', result);
+    } else {
+        console.log('Skipping sync: not authenticated');
+        if (onModeChange) onModeChange('online', { success: false, reason: 'unauthenticated' });
+    }
 }
 
 async function switchToOffline() {
