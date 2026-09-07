@@ -27,6 +27,12 @@ class Laundry extends BaseModel
         return [
             'laundry_nama' => ['required', 'string', 'max:100'],
             'laundry_kode' => ['required', 'string', 'max:20'],
+            'laundry_alamat' => ['nullable', 'string', 'max:255'],
+            'laundry_telepon' => ['nullable', 'string', 'max:15'],
+            'laundry_is_aktif' => ['nullable', 'boolean'],
+            'laundry_latitude' => ['nullable', 'numeric', 'between:-90,90'],
+            'laundry_longitude' => ['nullable', 'numeric', 'between:-180,180'],
+            'laundry_radius_m' => ['nullable', 'integer', 'min:1', 'max:10000'],
         ];
     }
 
