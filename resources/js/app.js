@@ -57,3 +57,24 @@ function formatQty(value) {
     formatted = formatted.replace(/0+$/, '').replace(/,$/, '');
     return formatted;
 }
+
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+            .then((registration) => {
+                console.log('SW registered:', registration.scope);
+            })
+            .catch((error) => {
+                console.log('SW registration failed:', error);
+            });
+    });
+}
+
+import Chart from 'chart.js/auto';
+window.Chart = Chart;
+
+import { initOfflineMode } from './offline/app.js';
+
+document.addEventListener('DOMContentLoaded', () => {
+    initOfflineMode().catch(console.error);
+});

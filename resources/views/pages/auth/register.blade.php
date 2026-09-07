@@ -10,6 +10,7 @@
 
         <x-form :action="route('register.store')" method="POST">
             <div class="bg-base-100 rounded-lg shadow-sm p-4 space-y-4">
+                <x-input name="laundry_nama" type="text" label="Nama Laundry" placeholder="Nama laundry Anda" />
                 <x-input name="name" type="text" :label="__('Name')" placeholder="Full name" />
                 <x-input name="email" type="email" :label="__('Email address')" placeholder="email@example.com" />
                 <x-input name="password" type="password" :label="__('Password')" placeholder="Password" />

@@ -130,6 +130,91 @@
                     <textarea name="footer_text" rows="2"
                         class="w-full border border-outline-variant rounded-lg px-3 py-2 bg-surface text-on-surface focus:border-primary focus:ring-1 focus:ring-primary text-sm">{{ old('footer_text', $settings['footer_text'] ?? '') }}</textarea>
                 </div>
+
+                {{-- Offline / PWA --}}
+                <div class="md:col-span-2">
+                    <div class="border border-outline-variant rounded-xl p-4 bg-surface flex items-start gap-4">
+                        <div class="shrink-0 w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                            <span class="material-symbols-outlined text-primary">wifi_off</span>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between gap-4">
+                                <div>
+                                    <p class="text-sm font-semibold text-on-surface">Mode Offline (PWA)</p>
+                                    <p class="text-xs text-on-surface-variant mt-0.5">Aktifkan agar POS & Dashboard tetap bisa dipakai tanpa internet. Data disimpan di browser (IndexedDB) dan sinkron otomatis saat online.</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer shrink-0">
+                                    <input type="checkbox" name="offline_enabled" value="1" class="sr-only peer" {{ old('offline_enabled', $settings['offline_enabled'] ?? config('website.offline_enabled', true)) ? 'checked' : '' }}>
+                                    <div class="w-11 h-6 bg-outline-variant rounded-full peer peer-checked:bg-primary transition-colors after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-5"></div>
+                                </label>
+                            </div>
+                            <div class="mt-3 flex items-center gap-2 text-xs">
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium {{ ($settings['offline_enabled'] ?? config('website.offline_enabled', true)) ? 'bg-success/10 text-success border border-success/20' : 'bg-outline-variant/50 text-on-surface-variant border border-outline-variant' }}">
+                                    <span class="w-2 h-2 rounded-full {{ ($settings['offline_enabled'] ?? config('website.offline_enabled', true)) ? 'bg-success' : 'bg-on-surface-variant/50' }}"></span>
+                                    {{ ($settings['offline_enabled'] ?? config('website.offline_enabled', true)) ? 'Aktif' : 'Nonaktif' }}
+                                </span>
+                                <span class="text-on-surface-variant">Status saat ini: <span id="offline-setting-status" class="font-medium text-on-surface">mengecek…</span></span>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-xs text-on-surface-variant mt-2">Nonaktifkan jika tidak butuh offline — service worker & sync akan dimatikan.</p>
+                </div>
+
+                {{-- Staff Target & Fee (khusus order yang bisa dilihat/diedit) --}}
+                <div class="md:col-span-2">
+                    <div class="border border-outline-variant rounded-xl p-4 bg-surface">
+                        <div class="flex items-center gap-3 mb-3">
+                            <div class="w-10 h-10 rounded-full bg-warning/10 flex items-center justify-center"><span class="material-symbols-outlined text-warning">trophy</span></div>
+                            <div>
+                                <p class="text-sm font-semibold text-on-surface">Target & Insentif Staff (Order)</p>
+                                <p class="text-xs text-on-surface-variant">Khusus order yang staff bisa lihat & edit (order miliknya). Jika melebihi target, fee per order akan dihitung.</p>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-on-surface mb-1">Target per Bulan (order)</label>
+                                <input type="number" name="staff_target" min="1" max="10000" value="{{ old('staff_target', $settings['staff_target'] ?? config('website.staff_target', 100)) }}" class="w-full border border-outline-variant rounded-lg px-3 py-2 bg-surface text-on-surface focus:border-primary focus:ring-1 focus:ring-primary text-sm">
+                                <p class="text-xs text-on-surface-variant mt-1">Contoh: 100 → staff harus kerjakan 100 order/bulan.</p>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-on-surface mb-1">Fee per Order Lebih (Rp)</label>
+                                <input type="number" name="staff_fee" min="0" max="1000000" step="100" value="{{ old('staff_fee', $settings['staff_fee'] ?? config('website.staff_fee', 1000)) }}" class="w-full border border-outline-variant rounded-lg px-3 py-2 bg-surface text-on-surface focus:border-primary focus:ring-1 focus:ring-primary text-sm">
+                                <p class="text-xs text-on-surface-variant mt-1">Contoh: 1000 → 120 order = 20×1000 = Rp 20.000 fee.</p>
+                            </div>
+                        </div>
+                        <div class="mt-3 p-2.5 rounded-lg bg-primary/5 border border-primary/10 text-xs text-on-surface-variant">
+                            Rumus: <span class="font-mono font-semibold">fee = max(0, order_bulan_ini − target) × fee_per_order</span> — hanya hitung order milik staff tersebut.
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Store Location (untuk absensi 50m) --}}
+                <div class="md:col-span-2">
+                    <div class="border border-outline-variant rounded-xl p-4 bg-surface">
+                        <div class="flex items-center gap-3 mb-3">
+                            <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center"><span class="material-symbols-outlined text-primary">location_on</span></div>
+                            <div>
+                                <p class="text-sm font-semibold text-on-surface">Lokasi Toko (Absensi)</p>
+                                <p class="text-xs text-on-surface-variant">Jika laundry belum set koordinat, pakai config ini. Radius default 50 m — check-in/out valid jika ≤ radius.</p>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-on-surface mb-1">Latitude</label>
+                                <input type="text" name="store_latitude" value="{{ old('store_latitude', $settings['store_latitude'] ?? config('website.store_latitude', '-6.2000000')) }}" class="w-full border border-outline-variant rounded-lg px-3 py-2 bg-surface text-on-surface focus:border-primary focus:ring-1 focus:ring-primary text-sm font-mono" placeholder="-6.2000000">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-on-surface mb-1">Longitude</label>
+                                <input type="text" name="store_longitude" value="{{ old('store_longitude', $settings['store_longitude'] ?? config('website.store_longitude', '106.8166660')) }}" class="w-full border border-outline-variant rounded-lg px-3 py-2 bg-surface text-on-surface focus:border-primary focus:ring-1 focus:ring-primary text-sm font-mono" placeholder="106.8166660">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-on-surface mb-1">Radius (meter)</label>
+                                <input type="number" name="store_radius" min="10" max="1000" value="{{ old('store_radius', $settings['store_radius'] ?? config('website.store_radius', 50)) }}" class="w-full border border-outline-variant rounded-lg px-3 py-2 bg-surface text-on-surface focus:border-primary focus:ring-1 focus:ring-primary text-sm">
+                            </div>
+                        </div>
+                        <p class="text-xs text-on-surface-variant mt-2">Lihat <a href="https://maps.google.com" target="_blank" class="text-primary hover:underline">Google Maps</a> untuk koordinat — klik kanan → copy coordinates. Per laundry juga bisa di-set via DB `laundry_latitude/longitude`.</p>
+                    </div>
+                </div>
             </div>
 
             <div class="flex items-center gap-3 pt-4 border-t border-outline-variant">
@@ -155,6 +240,14 @@
                 reader.readAsDataURL(input.files[0]);
             }
         }
+        (function() {
+            const el = document.getElementById('offline-setting-status');
+            if (!el) return;
+            function upd() { el.textContent = navigator.onLine ? 'Online' : 'Offline'; el.className = navigator.onLine ? 'font-medium text-success' : 'font-medium text-warning'; }
+            upd();
+            window.addEventListener('online', upd);
+            window.addEventListener('offline', upd);
+        })();
     </script>
     @endpush
 </x-layouts::app>

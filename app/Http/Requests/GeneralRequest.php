@@ -16,8 +16,24 @@ class GeneralRequest extends FormRequest
             return true;
         }
 
-        $action = str_replace(['get', 'post'], '', strtolower(request()->route()->getActionMethod()));
+        $method = request()->route()->getActionMethod();
+        // ponytail: strip only the leading get/post prefix (str_replace would
+        // also eat inner occurrences, e.g. getTarget -> tar).
+        $action = strtolower(preg_replace('/^(get|post)/i', '', $method));
         $action = $action === 'index' ? 'table' : $action;
+
+        // ponytail: custom actions (getKartuStok, getJadwal, postRusak, ...)
+        // have no matching policy method, so Gate denies -> 403. Fall back
+        // to the standard read/write ability instead of denying.
+        $policy = policy($model);
+        if ($policy === null || ! method_exists($policy, $action)) {
+            $isWrite = str_starts_with(strtolower($method), 'post');
+            if ($isWrite) {
+                $action = request()->route()->parameter('id') !== null ? 'update' : 'create';
+            } else {
+                $action = request()->route()->parameter('id') !== null ? 'show' : 'table';
+            }
+        }
 
         return $this->user()->can($action, $model);
     }

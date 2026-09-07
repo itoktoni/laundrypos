@@ -1,6 +1,9 @@
 <?php
 
+use App\Http\Controllers\CrmController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\LaundryController;
+use App\Http\Controllers\OrderController;
 use App\Http\Controllers\WebsiteSettingController;
 use App\Models\Notification;
 use App\Services\CentrifugoService;
@@ -27,11 +30,54 @@ Route::middleware('auth')->post('/centrifugo/token', function (Request $request)
     ]);
 });
 
-Route::middleware(['auth', 'verified', 'access'])->group(function () {
+Route::middleware(['auth'])->group(function () {
+    Route::get('/laundry/picker', [LaundryController::class, 'picker'])->name('laundry.picker');
+    Route::post('/laundry/select', [LaundryController::class, 'select'])->name('laundry.select');
+    Route::auto('/laundries', 'LaundriesController', ['name' => 'laundries']);
+});
+
+Route::middleware(['auth', 'verified', 'access', 'laundry.selected'])->group(function () {
 
     Route::get('dashboard', DashboardController::class)->name('dashboard');
 
+    Route::get('/crm', CrmController::class)->name('crm.dashboard');
+
     Route::auto('/user', 'UsersController', ['name' => 'user']);
+
+    Route::auto('/kategori', 'KategoriController', ['name' => 'kategori']);
+
+    Route::auto('/customer', 'CustomerController', ['name' => 'customer']);
+
+    Route::auto('/product', 'ProductController', ['name' => 'product']);
+
+    Route::auto('/discount', 'DiscountController', ['name' => 'discount']);
+
+    Route::auto('/order-status', 'OrderStatusController', ['name' => 'order-status']);
+
+    Route::view('/pos', 'pages.order.pos')->name('pos.index');
+
+    Route::auto('/order', 'OrderController', ['name' => 'order']);
+
+    Route::auto('/expense', 'ExpenseController', ['name' => 'expense']);
+
+    Route::auto('/inventory', 'InventoryController', ['name' => 'inventory']);
+
+    Route::auto('/inventory-movement', 'InventoryMovementController', ['name' => 'inventory-movement']);
+
+    Route::auto('/mesin', 'MesinController', ['name' => 'mesin']);
+
+    Route::auto('/mesin-service', 'MesinServiceController', ['name' => 'mesin-service']);
+
+    Route::auto('/staff-attendance', 'StaffAttendanceController', ['name' => 'staff-attendance']);
+
+    Route::auto('/order', 'OrderController', ['name' => 'order']);
+
+    Route::auto('/report/order', 'ReportOrderController', ['name' => 'report.order']);
+    Route::auto('/report/expense', 'ReportExpenseController', ['name' => 'report.expense']);
+    Route::auto('/report/inventory', 'ReportInventoryController', ['name' => 'report.inventory']);
+    Route::auto('/report/mesin', 'ReportMesinController', ['name' => 'report.mesin']);
+    Route::auto('/report/absensi', 'ReportAbsensiController', ['name' => 'report.absensi']);
+    Route::auto('/report/penggajian', 'ReportPenggajianController', ['name' => 'report.penggajian']);
 
     Route::get('/native-bridge-test', function () {
         return view('pages.settings.native-bridge-test');

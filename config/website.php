@@ -72,4 +72,28 @@ return [
     ],
 
     'footer_text' => env('WEBSITE_FOOTER_TEXT', ''),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Offline / PWA
+    |--------------------------------------------------------------------------
+    */
+
+    'offline_enabled' => env('WEBSITE_OFFLINE_ENABLED', true),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Staff Incentive
+    |--------------------------------------------------------------------------
+    */
+
+    'staff_target' => (int) env('STAFF_TARGET_MONTHLY', 100),
+
+    'staff_fee' => (int) env('STAFF_FEE_PER_ORDER', 1000),
+
+    'store_latitude' => env('STORE_LATITUDE', '-6.2000000'),
+
+    'store_longitude' => env('STORE_LONGITUDE', '106.8166660'),
+
+    'store_radius' => (int) env('STORE_RADIUS_M', 50),
 ];

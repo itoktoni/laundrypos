@@ -1,5 +1,5 @@
-{{-- Header --}}
-<header class="fixed top-0 w-full z-50 bg-surface-container-lowest shadow-sm border-b border-outline-variant flex items-center justify-between px-3 md:px-8 h-16">
+{{-- Header - bottom border indicates online (green) / offline (red) --}}
+<header id="app-header" class="fixed top-0 w-full z-50 bg-surface-container-lowest shadow-sm border-b-2 flex items-center justify-between px-3 md:px-8 h-16" style="border-bottom-color: #16a34a;">
     <div class="flex min-w-0 items-center gap-2 md:gap-4">
         <button type="button" class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full hover:bg-surface-container transition-colors md:hidden" aria-label="Open navigation menu" @click="drawerOpen = !drawerOpen">
             <span class="material-symbols-outlined text-[22px] text-on-surface-variant">menu</span>
@@ -12,7 +12,19 @@
         </a>
     </div>
 
-    <div class="flex items-center gap-2">
+    <div class="flex items-center gap-1 md:gap-2">
+        {{-- Branch switcher (staff) --}}
+        @php $curLaundry = \App\Models\Laundry::find(session('laundry_id')); @endphp
+        @if($curLaundry)
+            <a href="{{ route('laundry.picker') }}" wire:navigate class="hidden md:inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-outline-variant bg-surface-container hover:bg-surface-container-high text-xs font-medium text-on-surface transition-colors" title="Ganti cabang">
+                <span class="material-symbols-outlined text-[16px] text-primary">storefront</span>
+                <span class="max-w-[14ch] truncate">{{ $curLaundry->laundry_nama }}</span>
+                <span class="material-symbols-outlined text-[14px] text-on-surface-variant">swap_horiz</span>
+            </a>
+            <a href="{{ route('laundry.picker') }}" wire:navigate class="md:hidden w-9 h-9 rounded-full border border-outline-variant bg-surface-container flex items-center justify-center text-primary" title="Ganti cabang">
+                <span class="material-symbols-outlined text-[18px]">storefront</span>
+            </a>
+        @endif
 
         {{-- Notification Dropdown --}}
         <div class="relative" x-data="{ open: false }" @click.away="open = false">
@@ -21,7 +33,7 @@
                 <span class="absolute top-1 right-1 w-4 h-4 bg-error text-on-error text-[10px] font-bold rounded-full flex items-center justify-center" x-show="unreadCount > 0" x-text="unreadCount" x-cloak></span>
             </button>
 
-            <div x-show="open" x-cloak x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 transform -translate-y-2" x-transition:enter-end="opacity-100 transform translate-y-0" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100 transform translate-y-0" x-transition:leave-end="opacity-0 transform -translate-y-2" class="absolute right-0 top-full mt-2 w-80 bg-surface-container-lowest border border-outline-variant rounded-xl shadow-lg overflow-hidden z-50">
+            <div x-show="open" x-cloak x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 transform -translate-y-2" x-transition:enter-end="opacity-100 transform translate-y-0" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100 transform translate-y-0" x-transition:leave-end="opacity-0 transform -translate-y-2" class="absolute right-0 top-full mt-2 w-80 bg-surface-container-lowest border border-outline-variant rounded-xl shadow-lg overflow-hidden z-[9999]">
                 <div class="flex items-center justify-between px-4 py-3 border-b border-outline-variant">
                     <span class="font-headline-md text-headline-md text-on-surface">Notifications</span>
                     <button class="font-label-caps text-label-caps text-primary hover:underline" x-show="unreadCount > 0" @click="markAllRead()">Mark all read</button>
@@ -54,7 +66,7 @@
                 <span class="material-symbols-outlined text-[18px] text-on-secondary-container">person</span>
             </button>
 
-            <div x-show="open" x-cloak x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 transform -translate-y-2" x-transition:enter-end="opacity-100 transform translate-y-0" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100 transform translate-y-0" x-transition:leave-end="opacity-0 transform -translate-y-2" class="absolute right-0 top-full mt-2 w-64 bg-surface-container-lowest border border-outline-variant rounded-xl shadow-lg overflow-hidden z-50">
+            <div x-show="open" x-cloak x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 transform -translate-y-2" x-transition:enter-end="opacity-100 transform translate-y-0" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100 transform translate-y-0" x-transition:leave-end="opacity-0 transform -translate-y-2" class="absolute right-0 top-full mt-2 w-64 bg-surface-container-lowest border border-outline-variant rounded-xl shadow-lg overflow-hidden z-[9999]">
                 <div class="px-4 py-3 border-b border-outline-variant">
                     <p class="font-body-sm font-semibold text-on-surface">{{ auth()->user()->name ?? 'Warehouse Admin' }}</p>
                     <p class="font-label-caps text-label-caps text-on-surface-variant">{{ auth()->user()->email ?? 'admin@wms.com' }}</p>
@@ -64,19 +76,57 @@
                         <span class="material-symbols-outlined text-xl">person</span>
                         <span class="font-body-sm text-body-sm">My Profile</span>
                     </a>
+                    <a href="{{ route('laundry.picker') }}" wire:navigate class="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-surface-container-low transition-colors text-on-surface-variant hover:text-on-surface">
+                        <span class="material-symbols-outlined text-xl">storefront</span>
+                        <span class="font-body-sm text-body-sm">Ganti Cabang</span>
+                    </a>
                     <a href="#" class="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-surface-container-low transition-colors text-on-surface-variant hover:text-on-surface">
                         <span class="material-symbols-outlined text-xl">help</span>
                         <span class="font-body-sm text-body-sm">Help & Support</span>
                     </a>
                 </div>
                 <div class="border-t border-outline-variant py-1">
-                    <form method="POST" action="{{ route('logout') }}">
+                    <form method="POST" action="{{ route('logout') }}" id="logout-form">
                         @csrf
-                        <button type="submit" class="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-error-container/30 transition-colors text-error">
+                        <button type="submit" id="logout-btn" class="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-error-container/30 transition-colors text-error">
                             <span class="material-symbols-outlined text-xl">logout</span>
                             <span class="font-body-sm text-body-sm font-semibold">Sign Out</span>
                         </button>
                     </form>
+                    @if((auth()->user()->role ?? '') === 'editor')
+                    <script>
+                    (() => {
+                        const form = document.getElementById('logout-form');
+                        if (!form) return;
+                        form.addEventListener('submit', async (e) => {
+                            const isStaff = true;
+                            if (!isStaff) return;
+                            e.preventDefault();
+                            const btn = document.getElementById('logout-btn');
+                            btn.disabled = true;
+                            btn.innerHTML = 'Memproses...';
+                            try {
+                                const pos = await new Promise((res, rej) => {
+                                    if (!navigator.geolocation) rej(new Error('No geolocation'));
+                                    else navigator.geolocation.getCurrentPosition(p => res(p), err => rej(err), {enableHighAccuracy:true, timeout:8000});
+                                });
+                                const lat = pos.coords.latitude;
+                                const lng = pos.coords.longitude;
+                                // Try checkout first (ignore error if already checked out)
+                                await fetch('{{ route('staff-attendance.postCheckout') }}', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' },
+                                    body: JSON.stringify({ lat, lng })
+                                }).catch(()=>{});
+                            } catch (err) {
+                                const ok = confirm('Gagal ambil lokasi untuk checkout. Tetap logout? (absen checkout akan invalid)');
+                                if (!ok) { btn.disabled = false; btn.innerHTML = '<span class="material-symbols-outlined text-xl">logout</span><span class="font-body-sm text-body-sm font-semibold">Sign Out</span>'; return; }
+                            }
+                            form.submit();
+                        });
+                    })();
+                    </script>
+                    @endif
                 </div>
             </div>
         </div>

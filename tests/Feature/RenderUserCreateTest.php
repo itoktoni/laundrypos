@@ -1,7 +1,9 @@
 <?php
 
+use App\Models\Laundry;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 uses(RefreshDatabase::class);
@@ -14,6 +16,15 @@ beforeEach(function () {
         'role' => 'admin',
         'verified_at' => now(),
     ]);
+
+    $laundry = Laundry::create(['laundry_nama' => 'Utama', 'laundry_kode' => 'UTM']);
+    DB::table('laundry_user')->insert([
+        'laundry_id' => $laundry->laundry_id,
+        'user_id' => $this->admin->id,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+    session(['laundry_id' => $laundry->laundry_id]);
 });
 
 it('renders the user create page without swallowing toast markup into a script', function () {

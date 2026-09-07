@@ -29,12 +29,15 @@
                             'X-Requested-With': 'XMLHttpRequest',
                         },
                     });
-                    if (!res.ok) return;
+                    if (!res.ok || res.redirected) return;
+                    const ct = res.headers.get('content-type') || '';
+                    if (!ct.includes('application/json')) return;
                     const data = await res.json();
                     this.notifications = data.notifications || [];
                     this.unreadCount = data.unread_count || 0;
                 } catch (e) {
-                    console.warn('Failed to fetch notifications:', e);
+                    // Silently ignore non-JSON/redirect responses (e.g. laundry not selected → 302 HTML)
+                    return;
                 }
             },
 
@@ -114,7 +117,7 @@
         if (!container) {
             container = document.createElement('div');
             container.id = 'toast-container';
-            container.className = 'fixed bottom-4 right-4 z-50 space-y-2 w-80';
+            container.className = 'fixed top-20 right-4 z-50 space-y-2 w-80';
             document.body.appendChild(container);
         }
 

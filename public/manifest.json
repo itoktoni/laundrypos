@@ -1,15 +1,15 @@
 {
-    "name": "Startok",
-    "short_name": "Startok",
-    "description": "Startok - Point of Sale & Business Management",
-    "start_url": "/",
+    "name": "Laundry POS",
+    "short_name": "LaundryPOS",
+    "description": "Sistem Point of Sale Laundry",
+    "start_url": "/dashboard",
     "display": "standalone",
     "background_color": "#ffffff",
-    "theme_color": "#000000",
-    "orientation": "any",
+    "theme_color": "#4f46e5",
+    "orientation": "portrait",
     "scope": "/",
-    "lang": "en",
-    "categories": ["business", "productivity"],
+    "lang": "id",
+    "categories": ["business", "utilities"],
     "icons": [
         {
             "src": "/favicon.ico",
@@ -29,7 +29,6 @@
             "purpose": "any"
         }
     ],
-    "screenshots": [],
     "shortcuts": [
         {
             "name": "Dashboard",

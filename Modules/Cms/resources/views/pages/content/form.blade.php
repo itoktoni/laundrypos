@@ -627,8 +627,8 @@ $layoutColors = [
         }
 
         // Layout icon/color maps
-        const layoutIcons = @json($layoutIcons);
-        const layoutColors = @json($layoutColors);
+        var layoutIcons = @json($layoutIcons);
+        var layoutColors = @json($layoutColors);
 
         // Escape HTML
         function escHtml(str) {

@@ -125,8 +125,8 @@ trait ControllerTrait
         // Get the class name (e.g., UserController)
         $className = class_basename(get_class($this));
 
-        // Remove 'Controller' suffix and convert to lowercase
-        $module = strtolower(str_replace('Controller', '', $className));
+        // Remove 'Controller' suffix and convert to kebab-case (OrderStatus -> order-status)
+        $module = \Illuminate\Support\Str::kebab(str_replace('Controller', '', $className));
 
         // Get the method name (e.g., getCreate)
         $method = debug_backtrace()[1]['function'];

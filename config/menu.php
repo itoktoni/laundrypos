@@ -22,8 +22,39 @@ return [
             ],
         ],
         [
+            'label' => 'Laundry',
+            'items' => [
+                ['route' => 'pos.index', 'icon' => 'point_of_sale', 'label' => 'POS Kasir'],
+                ['route' => 'order.getTable', 'icon' => 'receipt_long', 'label' => 'Orders', 'match' => ['order.*']],
+                ['route' => 'crm.dashboard', 'icon' => 'analytics', 'label' => 'CRM', 'match' => ['crm.*']],
+                ['route' => 'expense.getTable', 'icon' => 'receipt_long', 'label' => 'Pengeluaran', 'match' => ['expense.*']],
+                ['route' => 'inventory.getTable', 'icon' => 'inventory_2', 'label' => 'Inventory', 'match' => ['inventory.*']],
+                ['route' => 'inventory-movement.getTable', 'icon' => 'swap_horiz', 'label' => 'Stok Masuk/Keluar', 'match' => ['inventory-movement.*']],
+                ['route' => 'mesin.getTable', 'icon' => 'hardware', 'label' => 'Mesin', 'match' => ['mesin.*']],
+                ['route' => 'mesin-service.getTable', 'icon' => 'handyman', 'label' => 'Service Mesin', 'match' => ['mesin-service.*']],
+                ['route' => 'staff-attendance.getCheckin', 'icon' => 'how_to_reg', 'label' => 'Absensi', 'match' => ['staff-attendance.*']],
+            ],
+        ],
+        [
+            'label' => 'Laporan',
+            'items' => [
+                ['route' => 'report.order.getIndex', 'icon' => 'receipt_long', 'label' => 'Order', 'match' => ['report.order.*']],
+                ['route' => 'report.expense.getIndex', 'icon' => 'payments', 'label' => 'Pengeluaran', 'match' => ['report.expense.*']],
+                ['route' => 'report.inventory.getIndex', 'icon' => 'inventory_2', 'label' => 'Inventory', 'match' => ['report.inventory.*']],
+                ['route' => 'report.mesin.getIndex', 'icon' => 'hardware', 'label' => 'Mesin', 'match' => ['report.mesin.*']],
+                ['route' => 'report.absensi.getIndex', 'icon' => 'how_to_reg', 'label' => 'Absensi', 'match' => ['report.absensi.*']],
+                ['route' => 'report.penggajian.getIndex', 'icon' => 'account_balance_wallet', 'label' => 'Penggajian', 'match' => ['report.penggajian.*']],
+            ],
+        ],
+        [
             'label' => 'Master Data',
             'items' => [
+                ['route' => 'laundries.getTable', 'icon' => 'storefront', 'label' => 'Cabang', 'match' => ['laundries.*']],
+                ['route' => 'product.getTable', 'icon' => 'local_laundry_service', 'label' => 'Products', 'match' => ['product.*']],
+                ['route' => 'kategori.getTable', 'icon' => 'category', 'label' => 'Kategori', 'match' => ['kategori.*']],
+                ['route' => 'discount.getTable', 'icon' => 'sell', 'label' => 'Discount', 'match' => ['discount.*']],
+                ['route' => 'customer.getTable', 'icon' => 'people', 'label' => 'Customers', 'match' => ['customer.*']],
+                ['route' => 'order-status.getTable', 'icon' => 'flag', 'label' => 'Status Order', 'match' => ['order-status.*']],
                 ['route' => 'user.getTable', 'icon' => 'manage_accounts', 'label' => 'Users', 'match' => ['user.*']],
             ],
         ],
@@ -43,20 +74,17 @@ return [
             'label' => 'Settings',
             'items' => [
                 ['route' => 'settings.website', 'icon' => 'language', 'label' => 'Website'],
-                ['route' => 'settings.env', 'icon' => 'settings', 'label' => 'Environment'],
                 ['route' => 'native-bridge-test', 'icon' => 'phone_android', 'label' => 'NativeBridge Test'],
             ],
         ],
     ],
 
     'bottom_nav' => [
-
-        ['route' => 'dashboard', 'icon' => 'home', 'label' => 'Left'],
-        ['route' => 'dashboard', 'icon' => 'home', 'label' => 'Kiri'],
         ['route' => 'dashboard', 'icon' => 'home', 'label' => 'Home'],
-        ['route' => 'dashboard', 'icon' => 'home', 'label' => 'Kanan'],
-        ['route' => 'dashboard', 'icon' => 'home', 'label' => 'Right'],
-
+        ['route' => 'pos.index', 'icon' => 'point_of_sale', 'label' => 'POS'],
+        ['route' => 'order.getTable', 'icon' => 'receipt_long', 'label' => 'Orders'],
+        ['route' => 'customer.getTable', 'icon' => 'people', 'label' => 'Customers'],
+        ['route' => 'settings.website', 'icon' => 'settings', 'label' => 'Settings'],
     ],
 
 ];

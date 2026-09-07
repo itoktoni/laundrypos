@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\SyncController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UsersController;
 use Illuminate\Support\Facades\Route;
@@ -13,4 +14,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/me', [AuthController::class, 'updateProfile']);
 
     Route::auto('/users', UsersController::class, ['name' => 'users']);
+});
+
+// Offline sync endpoints (session auth, called from browser JS)
+Route::middleware(['auth', 'web'])->prefix('sync')->group(function () {
+    Route::get('/products', [SyncController::class, 'pullProducts']);
+    Route::get('/categories', [SyncController::class, 'pullCategories']);
+    Route::get('/satuan', [SyncController::class, 'pullSatuan']);
+    Route::get('/customers', [SyncController::class, 'pullCustomers']);
+    Route::get('/status', [SyncController::class, 'syncStatus']);
+    Route::post('/orders', [SyncController::class, 'pushOrders']);
 });

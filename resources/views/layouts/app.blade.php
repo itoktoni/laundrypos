@@ -5,6 +5,8 @@
 
 <body class="text-on-surface bg-surface antialiased font-body-sm overflow-x-hidden" x-data="warehouseApp()">
 
+    <x-offline-banner />
+
     {{-- Overlay for mobile drawer (class statis = state awal drawerOpen=false, mencegah flash sebelum Alpine boot) --}}
     <div class="fixed inset-0 bg-black/40 z-40 md:hidden transition-opacity duration-200 opacity-0 pointer-events-none" :class="drawerOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'" @click="drawerOpen = false"></div>
 
