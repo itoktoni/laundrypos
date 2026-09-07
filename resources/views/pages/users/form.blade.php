@@ -12,7 +12,9 @@
                 <x-input col="6" type="password" name="password" />
                 <x-select col="6" name="role" :options="$role"/>
                 <x-input col="6" type="number" name="gaji_pokok" label="Gaji Pokok (Rp)" />
-                <x-input col="6" type="number" name="gaji_absensi" label="Potongan / Hari Absen (Rp)" />
+                <x-input col="6" type="number" name="gaji_absensi" label="Insentif / Hari Hadir (Rp)" />
+                <x-input col="6" type="number" name="denda_terlambat" label="Denda Terlambat (Rp)" />
+                <x-input col="6" type="number" name="denda_checkout" label="Denda Tanpa Checkout (Rp)" />
 
                 <x-file
                     name="avatar"

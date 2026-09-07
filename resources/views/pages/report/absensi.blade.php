@@ -102,6 +102,16 @@
                                 <span class="text-[11px] text-on-surface-variant">{{ formatDate($row->attendance_tanggal) }}</span>
                                 <span class="text-xs font-medium text-on-surface shrink-0">{{ $row->attendance_checkin_at ? $row->attendance_checkin_at->format('H:i') : '-' }} &ndash; {{ $row->attendance_checkout_at ? $row->attendance_checkout_at->format('H:i') : '-' }}</span>
                             </div>
+                            @if (($row->evaluasi['terlambat'] ?? false) || ($row->evaluasi['noCheckout'] ?? false))
+                                <div class="flex gap-1 mt-1.5 flex-wrap">
+                                    @if ($row->evaluasi['terlambat'] ?? false)
+                                        <span class="badge badge-error">Terlambat {{ $row->evaluasi['menitTerlambat'] }} mnt</span>
+                                    @endif
+                                    @if ($row->evaluasi['noCheckout'] ?? false)
+                                        <span class="badge badge-warning">Tanpa checkout</span>
+                                    @endif
+                                </div>
+                            @endif
                         </div>
                     @empty
                         <p class="px-4 py-6 text-center text-body-sm text-on-surface-variant">Tidak ada data pada periode ini.</p>
@@ -124,8 +134,18 @@
                                 <tr class="border-b border-outline-variant last:border-0 hover:bg-surface-container-lowest transition-colors">
                                     <td class="px-4 py-3 text-body-sm text-on-surface">{{ formatDate($row->attendance_tanggal) }}</td>
                                     <td class="px-4 py-3 text-body-sm text-on-surface">{{ $row->hasUser?->name ?? '-' }}</td>
-                                    <td class="px-4 py-3 text-body-sm text-on-surface">{{ $row->attendance_checkin_at ? $row->attendance_checkin_at->format('H:i') : '-' }}</td>
-                                    <td class="px-4 py-3 text-body-sm text-on-surface">{{ $row->attendance_checkout_at ? $row->attendance_checkout_at->format('H:i') : '-' }}</td>
+                                    <td class="px-4 py-3 text-body-sm text-on-surface">
+                                        {{ $row->attendance_checkin_at ? $row->attendance_checkin_at->format('H:i') : '-' }}
+                                        @if ($row->evaluasi['terlambat'] ?? false)
+                                            <span class="badge badge-error ml-1">Telat {{ $row->evaluasi['menitTerlambat'] }} mnt</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-4 py-3 text-body-sm text-on-surface">
+                                        {{ $row->attendance_checkout_at ? $row->attendance_checkout_at->format('H:i') : '-' }}
+                                        @if ($row->evaluasi['noCheckout'] ?? false)
+                                            <span class="badge badge-warning ml-1">Tanpa checkout</span>
+                                        @endif
+                                    </td>
                                     <td class="px-4 py-3 text-body-sm text-on-surface-variant">{{ ucfirst($row->attendance_status) }}</td>
                                 </tr>
                             @empty

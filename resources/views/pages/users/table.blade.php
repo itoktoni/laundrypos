@@ -71,7 +71,7 @@
                                 <p class="text-xs font-medium text-on-surface">Rp&nbsp;{{ formatQty($table->gaji_pokok) }}</p>
                             </div>
                             <div class="text-right">
-                                <p class="text-[10px] text-on-surface-variant uppercase tracking-wide mb-0.5">Potongan/Hari</p>
+                                <p class="text-[10px] text-on-surface-variant uppercase tracking-wide mb-0.5">Insentif/Hari</p>
                                 <p class="text-xs font-medium text-on-surface">Rp&nbsp;{{ formatQty($table->gaji_absensi) }}</p>
                             </div>
                         </div>

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Concerns\ReportTrait;
 use App\Models\StaffAttendance;
+use App\Models\StaffSchedule;
 use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
@@ -25,6 +26,36 @@ class ReportAbsensiController extends Controller
         return $query->orderBy('attendance_tanggal');
     }
 
+    // ponytail: preload jadwal (user|tanggal) agar evaluasi per baris
+    // tidak N+1; dipakai untuk badge terlambat & tanpa-checkout.
+    protected function jadwalMap($rows): array
+    {
+        $keys = $rows->map(fn ($r) => [
+            'user' => $r->attendance_id_user,
+            'date' => \Carbon\Carbon::parse($r->attendance_tanggal)->toDateString(),
+            'laundry' => $r->attendance_id_laundry,
+        ]);
+        if ($keys->isEmpty()) {
+            return [];
+        }
+
+        $map = [];
+        foreach ($keys->groupBy('laundry') as $laundryId => $group) {
+            $schedules = StaffSchedule::withoutGlobalScopes()
+                ->where('schedule_id_laundry', $laundryId)
+                ->whereIn('schedule_id_user', $group->pluck('user')->unique())
+                ->whereDate('schedule_tanggal', '>=', $group->pluck('date')->min())
+                ->whereDate('schedule_tanggal', '<=', $group->pluck('date')->max())
+                ->get()
+                ->keyBy(fn ($s) => $s->schedule_id_user.'|'.\Carbon\Carbon::parse($s->schedule_tanggal)->toDateString());
+            foreach ($schedules as $k => $s) {
+                $map[$k] = $s;
+            }
+        }
+
+        return $map;
+    }
+
     // ponytail: ringkasan penggajian per karyawan — hadir × upah harian.
     protected function payrolls($rows, float $upah): array
     {
@@ -41,10 +72,22 @@ class ReportAbsensiController extends Controller
         })->values()->all();
     }
 
+    // ponytail: evaluasi per baris (terlambat/menit/no-checkout) ikut jadwal.
+    protected function evaluated($rows, array $jadwalMap)
+    {
+        return $rows->map(function ($row) use ($jadwalMap) {
+            $key = $row->attendance_id_user.'|'.\Carbon\Carbon::parse($row->attendance_tanggal)->toDateString();
+            $row->evaluasi = StaffSchedule::evaluate($row, $jadwalMap[$key] ?? null);
+
+            return $row;
+        });
+    }
+
     public function getIndex(Request $request)
     {
         [$dari, $sampai] = $this->periode($request);
-        $rows = $this->query($request, $dari, $sampai)->get();
+        $base = $this->query($request, $dari, $sampai)->get();
+        $rows = $this->evaluated($base, $this->jadwalMap($base));
         $upah = max((float) $request->input('upah', 0), 0);
 
         return view('pages.report.absensi', [
@@ -78,7 +121,8 @@ class ReportAbsensiController extends Controller
     public function getPdf(Request $request)
     {
         [$dari, $sampai] = $this->periode($request);
-        $rows = $this->query($request, $dari, $sampai)->get();
+        $base = $this->query($request, $dari, $sampai)->get();
+        $rows = $this->evaluated($base, $this->jadwalMap($base));
         $upah = max((float) $request->input('upah', 0), 0);
 
         return Pdf::loadView('pdf.report-absensi', [

@@ -70,6 +70,8 @@ Route::middleware(['auth', 'verified', 'access', 'laundry.selected'])->group(fun
 
     Route::auto('/staff-attendance', 'StaffAttendanceController', ['name' => 'staff-attendance']);
 
+    Route::auto('/staff-schedule', 'StaffScheduleController', ['name' => 'staff-schedule']);
+
     Route::auto('/order', 'OrderController', ['name' => 'order']);
 
     Route::auto('/report/order', 'ReportOrderController', ['name' => 'report.order']);
@@ -78,6 +80,7 @@ Route::middleware(['auth', 'verified', 'access', 'laundry.selected'])->group(fun
     Route::auto('/report/mesin', 'ReportMesinController', ['name' => 'report.mesin']);
     Route::auto('/report/absensi', 'ReportAbsensiController', ['name' => 'report.absensi']);
     Route::auto('/report/penggajian', 'ReportPenggajianController', ['name' => 'report.penggajian']);
+    Route::auto('/report/jadwal', 'ReportJadwalController', ['name' => 'report.jadwal']);
 
     Route::get('/native-bridge-test', function () {
         return view('pages.settings.native-bridge-test');

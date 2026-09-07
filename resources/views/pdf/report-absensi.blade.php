@@ -10,6 +10,7 @@
             <th align="left">Check-in</th>
             <th align="left">Check-out</th>
             <th align="left">Status</th>
+            <th align="left">Ket.</th>
         </tr>
     </thead>
     <tbody>
@@ -20,12 +21,13 @@
                 <td>{{ $row->attendance_checkin_at ? $row->attendance_checkin_at->format('H:i') : '-' }}</td>
                 <td>{{ $row->attendance_checkout_at ? $row->attendance_checkout_at->format('H:i') : '-' }}</td>
                 <td>{{ ucfirst($row->attendance_status) }}</td>
+                <td>{{ ($row->evaluasi['terlambat'] ?? false) ? 'Telat '.$row->evaluasi['menitTerlambat'].' mnt' : '' }}{{ (($row->evaluasi['terlambat'] ?? false) && ($row->evaluasi['noCheckout'] ?? false)) ? ' + ' : '' }}{{ ($row->evaluasi['noCheckout'] ?? false) ? 'Tanpa checkout' : '' }}</td>
             </tr>
         @endforeach
     </tbody>
     <tfoot>
         <tr>
-            <td colspan="5"><strong>Hadir: {{ $rows->where('attendance_status', 'hadir')->count() }} &bull; Izin: {{ $rows->where('attendance_status', 'izin')->count() }} &bull; Sakit: {{ $rows->where('attendance_status', 'sakit')->count() }}</strong></td>
+            <td colspan="6"><strong>Hadir: {{ $rows->where('attendance_status', 'hadir')->count() }} &bull; Izin: {{ $rows->where('attendance_status', 'izin')->count() }} &bull; Sakit: {{ $rows->where('attendance_status', 'sakit')->count() }}</strong></td>
         </tr>
     </tfoot>
 </table>

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Concerns\ReportTrait;
 use App\Models\StaffAttendance;
+use App\Models\StaffSchedule;
 use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
@@ -22,12 +23,18 @@ class ReportPenggajianController extends Controller
         // ponytail: input kosong = pakai config user (fallback default global).
         $configPokok = (float) ($user?->gaji_pokok ?? 1000000);
         $configPotongan = (float) ($user?->gaji_absensi ?? 20000);
+        $configDendaTerlambat = (float) ($user?->denda_terlambat ?? 5000);
+        $configDendaCheckout = (float) ($user?->denda_checkout ?? 5000);
         $rawPokok = $request->input('pokok', '');
         $rawBonus = $request->input('bonus', '');
         $rawPotongan = $request->input('potongan', '');
+        $rawDendaTerlambat = $request->input('denda_terlambat', '');
+        $rawDendaCheckout = $request->input('denda_checkout', '');
         $pokok = $rawPokok === '' || $rawPokok === null ? $configPokok : max((float) $rawPokok, 0);
         $bonus = $rawBonus === '' || $rawBonus === null ? 0 : max((float) $rawBonus, 0);
         $potongan = $rawPotongan === '' || $rawPotongan === null ? $configPotongan : max((float) $rawPotongan, 0);
+        $dendaTerlambat = $rawDendaTerlambat === '' || $rawDendaTerlambat === null ? $configDendaTerlambat : max((float) $rawDendaTerlambat, 0);
+        $dendaCheckout = $rawDendaCheckout === '' || $rawDendaCheckout === null ? $configDendaCheckout : max((float) $rawDendaCheckout, 0);
         $rows = collect();
         if ($user) {
             $rows = StaffAttendance::with('hasUser')
@@ -58,6 +65,23 @@ class ReportPenggajianController extends Controller
         // ponytail: insentif kehadiran — hadir × rate, ditambahkan ke gaji.
         $insentif = round($hadir * $potongan, 2);
 
+        // ponytail: denda ikut jadwal — terlambat & tanpa checkout (hadir saja).
+        $terlambat = 0;
+        $noCheckout = 0;
+        $lateDates = [];
+        foreach ($rows as $row) {
+            $eval = StaffSchedule::evaluate($row);
+            if ($eval['terlambat']) {
+                $terlambat++;
+                $lateDates[] = \Carbon\Carbon::parse($row->attendance_tanggal)->toDateString();
+            }
+            if ($eval['noCheckout']) {
+                $noCheckout++;
+            }
+        }
+        $potTerlambat = round($terlambat * $dendaTerlambat, 2);
+        $potCheckout = round($noCheckout * $dendaCheckout, 2);
+
         return [
             'user' => $user,
             'rows' => $rows,
@@ -69,13 +93,24 @@ class ReportPenggajianController extends Controller
             'potongan' => $potongan,
             'configPokok' => $configPokok,
             'configPotongan' => $configPotongan,
+            'configDendaTerlambat' => $configDendaTerlambat,
+            'configDendaCheckout' => $configDendaCheckout,
             'rawPokok' => is_string($rawPokok) ? $rawPokok : '',
             'rawBonus' => is_string($rawBonus) ? $rawBonus : '',
             'rawPotongan' => is_string($rawPotongan) ? $rawPotongan : '',
+            'rawDendaTerlambat' => is_string($rawDendaTerlambat) ? $rawDendaTerlambat : '',
+            'rawDendaCheckout' => is_string($rawDendaCheckout) ? $rawDendaCheckout : '',
             'hariAbsen' => $hariAbsen,
             'hariKerja' => $hariKerja,
             'insentif' => $insentif,
-            'total' => round($pokok + $bonus + $insentif, 2),
+            'terlambat' => $terlambat,
+            'noCheckout' => $noCheckout,
+            'lateDates' => $lateDates,
+            'dendaTerlambat' => $dendaTerlambat,
+            'dendaCheckout' => $dendaCheckout,
+            'potTerlambat' => $potTerlambat,
+            'potCheckout' => $potCheckout,
+            'total' => round($pokok + $bonus + $insentif - $potTerlambat - $potCheckout, 2),
             'userId' => $userId,
         ];
     }

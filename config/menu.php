@@ -33,6 +33,7 @@ return [
                 ['route' => 'mesin.getTable', 'icon' => 'hardware', 'label' => 'Mesin', 'match' => ['mesin.*']],
                 ['route' => 'mesin-service.getTable', 'icon' => 'handyman', 'label' => 'Service Mesin', 'match' => ['mesin-service.*']],
                 ['route' => 'staff-attendance.getCheckin', 'icon' => 'how_to_reg', 'label' => 'Absensi', 'match' => ['staff-attendance.*']],
+                ['route' => 'staff-schedule.getTable', 'icon' => 'schedule', 'label' => 'Jadwal', 'match' => ['staff-schedule.*']],
             ],
         ],
         [
@@ -44,6 +45,7 @@ return [
                 ['route' => 'report.mesin.getIndex', 'icon' => 'hardware', 'label' => 'Mesin', 'match' => ['report.mesin.*']],
                 ['route' => 'report.absensi.getIndex', 'icon' => 'how_to_reg', 'label' => 'Absensi', 'match' => ['report.absensi.*']],
                 ['route' => 'report.penggajian.getIndex', 'icon' => 'account_balance_wallet', 'label' => 'Penggajian', 'match' => ['report.penggajian.*']],
+                ['route' => 'report.jadwal.getIndex', 'icon' => 'calendar_month', 'label' => 'Roster', 'match' => ['report.jadwal.*']],
             ],
         ],
         [

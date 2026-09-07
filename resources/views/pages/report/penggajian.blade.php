@@ -10,7 +10,7 @@
                 </div>
                 @if ($user && $rows->isNotEmpty())
                     <div class="shrink-0 w-full sm:w-auto sm:ml-auto">
-                        <a href="{{ route('report.penggajian.getPdf', ['dari' => $dari, 'sampai' => $sampai, 'user' => $userId, 'pokok' => $pokok, 'bonus' => $bonus, 'potongan' => $potongan]) }}" class="btn btn-sm btn-primary w-full sm:w-auto text-center">PDF</a>
+                        <a href="{{ route('report.penggajian.getPdf', ['dari' => $dari, 'sampai' => $sampai, 'user' => $userId, 'pokok' => $pokok, 'bonus' => $bonus, 'potongan' => $potongan, 'denda_terlambat' => $dendaTerlambat, 'denda_checkout' => $dendaCheckout]) }}" class="btn btn-sm btn-primary w-full sm:w-auto text-center">PDF</a>
                     </div>
                 @endif
             </div>
@@ -52,6 +52,14 @@
                             <input type="number" min="0" name="potongan" value="{{ $rawPotongan }}" placeholder="{{ formatQty($configPotongan) }}" class="mt-1 w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-sm text-on-surface">
                         </label>
                     </div>
+                    <div class="flex flex-col sm:flex-row gap-2">
+                        <label class="sm:flex-1 text-body-xs text-on-surface-variant">Denda terlambat (Rp)
+                            <input type="number" min="0" name="denda_terlambat" value="{{ $rawDendaTerlambat }}" placeholder="{{ formatQty($configDendaTerlambat) }}" class="mt-1 w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-sm text-on-surface">
+                        </label>
+                        <label class="sm:flex-1 text-body-xs text-on-surface-variant">Denda tanpa checkout (Rp)
+                            <input type="number" min="0" name="denda_checkout" value="{{ $rawDendaCheckout }}" placeholder="{{ formatQty($configDendaCheckout) }}" class="mt-1 w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-sm text-on-surface">
+                        </label>
+                    </div>
                 </div>
                 <button type="submit" class="btn btn-sm btn-primary">Tampilkan</button>
             </form>
@@ -78,13 +86,31 @@
                                 <span class="text-body-xs text-on-surface-variant">Gaji pokok</span>
                                 <span class="text-xs font-medium text-on-surface text-right shrink-0">Rp&nbsp;{{ formatQty($pokok) }}</span>
                             </div>
-                            <div class="flex items-center justify-between gap-2 px-3 py-2">
-                                <span class="text-body-xs text-on-surface-variant">Bonus</span>
-                                <span class="text-xs font-medium text-on-surface text-right shrink-0">+ Rp&nbsp;{{ formatQty($bonus) }}</span>
-                            </div>
+                            @if ($bonus > 0)
+                                <div class="flex items-center justify-between gap-2 px-3 py-2">
+                                    <span class="text-body-xs text-on-surface-variant">Bonus</span>
+                                    <span class="text-xs font-medium text-on-surface text-right shrink-0">+ Rp&nbsp;{{ formatQty($bonus) }}</span>
+                                </div>
+                            @endif
                             <div class="flex items-center justify-between gap-2 px-3 py-2">
                                 <span class="text-body-xs text-on-surface-variant">Hadir {{ $hadir }} &times; Rp&nbsp;{{ formatQty($potongan) }}</span>
                                 <span class="text-xs font-medium text-green-600 text-right shrink-0">+Rp&nbsp;{{ formatQty($insentif) }}</span>
+                            </div>
+                            @if ($terlambat > 0)
+                                <div class="flex items-center justify-between gap-2 px-3 py-2">
+                                    <span class="text-body-xs text-on-surface-variant">Terlambat {{ $terlambat }} &times; Rp&nbsp;{{ formatQty($dendaTerlambat) }}</span>
+                                    <span class="text-xs font-medium text-red-600 text-right shrink-0">&minus;Rp&nbsp;{{ formatQty($potTerlambat) }}</span>
+                                </div>
+                            @endif
+                            @if ($noCheckout > 0)
+                                <div class="flex items-center justify-between gap-2 px-3 py-2">
+                                    <span class="text-body-xs text-on-surface-variant">Tanpa checkout {{ $noCheckout }} &times; Rp&nbsp;{{ formatQty($dendaCheckout) }}</span>
+                                    <span class="text-xs font-medium text-red-600 text-right shrink-0">&minus;Rp&nbsp;{{ formatQty($potCheckout) }}</span>
+                                </div>
+                            @endif
+                            <div class="flex flex-col gap-0.5 px-3 py-2 bg-primary/5">
+                                <span class="text-[11px] text-on-surface-variant break-words">Rp&nbsp;{{ formatQty($pokok) }} + Rp&nbsp;{{ formatQty($bonus) }} + Rp&nbsp;{{ formatQty($insentif) }} &minus; Rp&nbsp;{{ formatQty($potTerlambat + $potCheckout) }}</span>
+                                <span class="text-base font-bold text-primary text-right">= Rp&nbsp;{{ formatQty($total) }}</span>
                             </div>
                         </div>
                     </div>
@@ -110,11 +136,12 @@
                         $monthRows = $rows->filter(fn ($r) => str_starts_with(\Carbon\Carbon::parse($r->attendance_tanggal)->toDateString(), $monthKey));
                         $hadirBulan = $monthRows->where('attendance_status', 'hadir')->count();
                         $insentifBulan = round($hadirBulan * $potongan, 2);
+                        $terlambatBulan = $monthRows->filter(fn ($r) => in_array(\Carbon\Carbon::parse($r->attendance_tanggal)->toDateString(), $lateDates))->count();
                     @endphp
                     <div class="bg-surface-container-low rounded-xl border border-outline-variant overflow-hidden">
                         <div class="px-4 py-3 border-b border-outline-variant">
                             <h2 class="font-title-md text-title-md text-on-surface leading-tight">{{ $bulanId[$cursor->month - 1] }} {{ $cursor->year }}</h2>
-                            <p class="text-body-xs text-on-surface-variant mt-0.5">{{ $hadirBulan }} hadir &times; Rp&nbsp;{{ formatQty($potongan) }} = <span class="font-bold text-green-600">+Rp&nbsp;{{ formatQty($insentifBulan) }}</span></p>
+                            <p class="text-body-xs text-on-surface-variant mt-0.5">{{ $hadirBulan }} hadir &times; Rp&nbsp;{{ formatQty($potongan) }} = <span class="font-bold text-green-600">+Rp&nbsp;{{ formatQty($insentifBulan) }}</span>@if($terlambatBulan > 0) &bull; <span class="font-bold text-red-600">{{ $terlambatBulan }} terlambat</span>@endif</p>
                         </div>
                         <div class="p-3">
                             <div class="flex flex-row">
@@ -130,6 +157,7 @@
                                     @php
                                         $key = sprintf('%s-%02d', $prefix, $d);
                                         $st = $byDate[$key]?->attendance_status ?? null;
+                                        $isLate = in_array($key, $lateDates);
                                         $inRange = $key >= $rangeStart && $key <= $rangeEnd;
                                         $isToday = $key === \Carbon\Carbon::today()->toDateString();
                                         $cell = $st === 'hadir'
@@ -141,7 +169,7 @@
                                                     : 'bg-surface-container-lowest text-on-surface-variant/60'));
                                     @endphp
                                     <div class="w-[14.28%] p-0.5 {{ $inRange ? '' : 'opacity-40' }}">
-                                        <div class="rounded-lg py-1.5 text-center text-xs {{ $cell }} {{ $isToday ? 'ring-2 ring-primary' : '' }}">{{ $d }}</div>
+                                        <div class="rounded-lg py-1.5 text-center text-xs {{ $cell }} {{ $isToday ? 'ring-2 ring-primary' : '' }} {{ $isLate ? 'underline decoration-2 underline-offset-2' : '' }}" @if($isLate) title="Terlambat" @endif>{{ $d }}</div>
                                     </div>
                                 @endfor
                             </div>
