@@ -275,15 +275,20 @@ class PosTerminal extends Component
 
         $this->reset('cart', 'customerId', 'walkinNama', 'walkinTelepon', 'saveWalkinAsCustomer', 'promoKode', 'discountId', 'discountNama', 'discountAmount');
 
-        // Show QRIS modal
+        // Show QRIS modal - QR generation tidak boleh bikin order gagal
         $this->qrOrderId = $order->getKey();
         $this->qrOrderCode = $order->order_code;
         $this->qrTotal = (float) $order->order_total;
         $this->qrSuffix = random_int(10, 99);
         $this->qrStatusId = $order->order_status_id;
         $this->qrTimeLeft = config('app.qris_timeout', 300);
-        $qrText = nominalQRIS(config('app.qris_data'), $this->qrTotal + $this->qrSuffix);
-        $this->qrDataUri = qrCodeDataUri($qrText, 8, 2);
+        try {
+            $qrText = nominalQRIS(config('app.qris_data'), $this->qrTotal + $this->qrSuffix);
+            $this->qrDataUri = qrCodeDataUri($qrText, 8, 2);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('QRIS generate failed', ['order' => $order->order_code, 'msg' => $e->getMessage()]);
+            $this->qrDataUri = '';
+        }
         $this->qrPaid = false;
         $this->showQr = true;
     }

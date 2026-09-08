@@ -266,23 +266,59 @@ function qrCodeDataUri(string $text, int $scale = 5, int $margin = 1): string
         return '';
     }
 
-    // Sanitasi: pastikan string QR tidak mengandung karakter aneh dari locale
     $text = trim($text);
 
-    $options = new QROptions([
-        'scale' => $scale,
-        'outputInterface' => QRGdImagePNG::class,
-        'quietzoneSize' => $margin,
-        'bgColor' => [255, 255, 255],
-    ]);
+    // Fallback jika chillerlan tidak terinstall di production
+    if (! class_exists(QROptions::class) || ! class_exists(QRCode::class) || ! class_exists(QRGdImagePNG::class)) {
+        // Coba fallback via milon/barcode DNS2D (selalu ada karena milon/barcode required)
+        try {
+            if (class_exists(\Milon\Barcode\DNS2D::class)) {
+                $pngBase64 = (new \Milon\Barcode\DNS2D)->getBarcodePNG($text, 'QRCODE', $scale, $scale, [0, 0, 0]);
+                if ($pngBase64) {
+                    return 'data:image/png;base64,' . $pngBase64;
+                }
+            }
+        } catch (\Throwable $e) {
+            // ignore
+        }
+        // Jika semua fallback gagal, return empty agar order tetap sukses tanpa QR
+        \Illuminate\Support\Facades\Log::warning('qrCodeDataUri fallback: chillerlan not installed', ['text_len' => strlen($text)]);
+        return '';
+    }
 
     try {
+        $options = new QROptions([
+            'scale' => $scale,
+            'outputInterface' => QRGdImagePNG::class,
+            'quietzoneSize' => $margin,
+            'bgColor' => [255, 255, 255],
+        ]);
         $dataUri = (new QRCode($options))->render($text);
     } catch (\Throwable $e) {
-        // Fallback: encode sebagai UTF-8 bersih, hapus karakter non-ASCII bermasalah
-        $clean = mb_convert_encoding($text, 'UTF-8', 'UTF-8');
-        $clean = preg_replace('/[^\x20-\x7E]/u', '', $clean);
-        $dataUri = (new QRCode($options))->render($clean ?: $text);
+        try {
+            $clean = mb_convert_encoding($text, 'UTF-8', 'UTF-8');
+            $clean = preg_replace('/[^\x20-\x7E]/u', '', $clean);
+            $options = new QROptions([
+                'scale' => $scale,
+                'outputInterface' => QRGdImagePNG::class,
+                'quietzoneSize' => $margin,
+                'bgColor' => [255, 255, 255],
+            ]);
+            $dataUri = (new QRCode($options))->render($clean ?: $text);
+        } catch (\Throwable $e2) {
+            \Illuminate\Support\Facades\Log::error('qrCodeDataUri error', ['msg' => $e2->getMessage()]);
+            // Fallback ke DNS2D lagi
+            try {
+                if (class_exists(\Milon\Barcode\DNS2D::class)) {
+                    $pngBase64 = (new \Milon\Barcode\DNS2D)->getBarcodePNG($text, 'QRCODE', $scale, $scale, [0, 0, 0]);
+                    if ($pngBase64) {
+                        return 'data:image/png;base64,' . $pngBase64;
+                    }
+                }
+            } catch (\Throwable $e3) {
+            }
+            return '';
+        }
     }
 
     return $dataUri;
