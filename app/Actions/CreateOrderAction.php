@@ -50,7 +50,8 @@ class CreateOrderAction
                 $estimasiJam = 0;
                 foreach ($data['items'] as $item) {
                     $product = $products[$item['product_id']];
-                    $qty = (int) $item['qty'];
+                    $qty = normalizeQty($item['qty'], 0) ?? 0;
+                    $qty = round($qty, 3);
                     $lineSubtotal = round((float) $product->product_harga_dasar * $qty, 2);
                     $subtotal += $lineSubtotal;
                     $estimasiJam += (int) $product->product_estimasi_jam;
@@ -157,9 +158,16 @@ class CreateOrderAction
 
                 continue;
             }
-            $qty = $item['qty'] ?? null;
-            if (! is_numeric($qty) || (int) $qty < 1 || (int) $qty > 999) {
-                $errors["items.{$index}.qty"] = ['Jumlah harus antara 1-999.'];
+            $rawQty = $item['qty'] ?? null;
+            $qty = normalizeQty($rawQty);
+            if ($qty === null || $qty < 0.001 || $qty > 999) {
+                $errors["items.{$index}.qty"] = ['Jumlah harus antara 0.001-999.'];
+            } elseif (round($qty, 3) != $qty) {
+                // Cek maksimal 3 desimal
+                $parts = explode('.', (string) $qty);
+                if (isset($parts[1]) && strlen(rtrim($parts[1], '0')) > 3) {
+                    $errors["items.{$index}.qty"] = ['Jumlah maksimal 3 angka di belakang koma.'];
+                }
             }
         }
 

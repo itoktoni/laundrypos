@@ -36,7 +36,7 @@ it('adds products to cart and merges duplicates', function () {
         ->assertSet('cart.0.qty', 2);
 });
 
-it('clamps qty between 1 and 999 and removes lines', function () {
+it('clamps qty between 0.5 and 999 and removes lines', function () {
     [, $product] = posFixture();
 
     Livewire::test(PosTerminal::class)
@@ -44,9 +44,24 @@ it('clamps qty between 1 and 999 and removes lines', function () {
         ->call('bumpQty', 0, 5000)
         ->assertSet('cart.0.qty', 999)
         ->call('bumpQty', 0, -100000)
-        ->assertSet('cart.0.qty', 1)
+        ->assertSet('cart.0.qty', 0.5)
         ->call('removeLine', 0)
         ->assertSet('cart', []);
+});
+
+it('supports decimal qty 2.3 kg and comma input 2,3 with 0.5 step', function () {
+    [, $product] = posFixture();
+
+    Livewire::test(PosTerminal::class)
+        ->call('addToCart', $product->getKey())
+        ->call('setQty', 0, '2,3')
+        ->assertSet('cart.0.qty', 2.3)
+        ->call('setQty', 0, '2.3')
+        ->assertSet('cart.0.qty', 2.3)
+        ->call('bumpQty', 0, 0.5)
+        ->assertSet('cart.0.qty', 2.8)
+        ->call('bumpQty', 0, -0.5)
+        ->assertSet('cart.0.qty', 2.3);
 });
 
 it('confirms walk-in order via POS and shows QR modal', function () {

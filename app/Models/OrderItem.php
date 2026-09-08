@@ -18,7 +18,7 @@ class OrderItem extends BaseModel
         return [
             'order_item_harga' => 'decimal:2',
             'order_item_subtotal' => 'decimal:2',
-            'order_item_qty' => 'integer',
+            'order_item_qty' => 'decimal:3',
         ];
     }
 

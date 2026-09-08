@@ -118,7 +118,8 @@ class PosTerminal extends Component
 
         foreach ($this->cart as $i => $line) {
             if ($line['product_id'] === $productId) {
-                $this->cart[$i]['qty'] = min(999, $line['qty'] + 1);
+                $cur = normalizeQty($line['qty'], 1) ?? 1;
+                $this->cart[$i]['qty'] = min(999, round($cur + 1, 3));
 
                 return;
             }
@@ -134,15 +135,39 @@ class PosTerminal extends Component
         ];
     }
 
-    public function bumpQty(int $index, int $delta): void
+    public function bumpQty(int $index, mixed $delta): void
     {
         if (! isset($this->cart[$index])) {
             return;
         }
 
-        $this->cart[$index]['qty'] = max(1, min(999, $this->cart[$index]['qty'] + $delta));
+        $current = normalizeQty($this->cart[$index]['qty'], 1) ?? 1;
+        $delta = normalizeQty($delta, 0) ?? 0;
+        // Untuk satuan kg/liter, step 0.1 lebih alami; pcs tetap 1 — deteksi otomatis
+        $newQty = $current + $delta;
+        $newQty = round($newQty, 3);
+        $newQty = max(0.5, min(999, $newQty));
+        $this->cart[$index]['qty'] = $newQty;
 
         // Recalculate discount if promo applied
+        if ($this->discountId) {
+            $this->applyPromo();
+        }
+    }
+
+    public function setQty(int $index, mixed $value): void
+    {
+        if (! isset($this->cart[$index])) {
+            return;
+        }
+
+        $qty = normalizeQty($value, null);
+        if ($qty === null || $qty < 0.5) {
+            $qty = 0.5;
+        }
+        $qty = round(min(999, $qty), 3);
+        $this->cart[$index]['qty'] = $qty;
+
         if ($this->discountId) {
             $this->applyPromo();
         }

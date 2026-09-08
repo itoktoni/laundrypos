@@ -165,8 +165,16 @@ use App\Livewire\Pos\PosTerminal;
                         </button>
                         <div class="flex items-center gap-0.5 rounded-full border border-outline-variant p-0.5">
                             <button type="button" wire:click="bumpQty({{ $i }}, -1)" class="w-7 h-7 rounded-full bg-surface-container hover:bg-outline-variant flex items-center justify-center text-base font-bold transition-colors">&minus;</button>
-                            <span class="w-6 text-center text-sm font-bold">{{ $line['qty'] }}</span>
+                            <input type="text" inputmode="decimal" value="{{ formatQty($line['qty']) }}"
+                                   wire:change="setQty({{ $i }}, $event.target.value)"
+                                   wire:keydown.enter="setQty({{ $i }}, $event.target.value)"
+                                   class="w-14 text-center text-sm font-bold bg-transparent border-0 focus:ring-0 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                   title="Edit qty — bisa koma (2,3)" placeholder="1">
                             <button type="button" wire:click="bumpQty({{ $i }}, 1)" class="w-7 h-7 rounded-full bg-primary text-on-primary hover:bg-primary/90 flex items-center justify-center text-base font-bold transition-colors">+</button>
+                        </div>
+                        <div class="flex gap-1">
+                            <button type="button" wire:click="bumpQty({{ $i }}, -0.5)" class="text-[10px] px-1.5 py-0.5 rounded-full border border-outline-variant hover:bg-surface-container">-0,5</button>
+                            <button type="button" wire:click="bumpQty({{ $i }}, 0.5)" class="text-[10px] px-1.5 py-0.5 rounded-full border border-outline-variant hover:bg-surface-container">+0,5</button>
                         </div>
                     </div>
                 </div>

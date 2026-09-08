@@ -20,7 +20,7 @@ class SyncOrdersRequest extends FormRequest
             'orders.*.items' => 'required|array|min:1',
             'orders.*.items.*.product_id' => 'required|integer',
             'orders.*.items.*.product_nama' => 'required|string|max:100',
-            'orders.*.items.*.qty' => 'required|integer|min:1',
+            'orders.*.items.*.qty' => 'required|numeric|min:0.001|max:999',
             'orders.*.items.*.price' => 'required|numeric|min:0',
             'orders.*.total' => 'required|numeric|min:0',
             'orders.*.discount' => 'nullable|numeric|min:0',

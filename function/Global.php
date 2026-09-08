@@ -51,16 +51,57 @@ function formatAngka(int $value, $simbol = null)
 }
 
 /**
+ * Normalisasi qty dari input user.
+ * Menerima "2,3", "2.3", " 2,300 ", "2.3 kg" → float 2.3
+ * Menghapus spasi, satuan, mengganti koma jadi titik, lalu validasi numeric.
+ */
+function normalizeQty(mixed $value, ?float $default = null): ?float
+{
+    if ($value === null || $value === '') {
+        return $default;
+    }
+    if (is_float($value) || is_int($value)) {
+        return (float) $value;
+    }
+    $str = trim((string) $value);
+    // Hapus satuan kg/pcs dll jika ada: "2,3 kg" → "2,3"
+    $str = preg_replace('/\s*[a-zA-Z]+\s*$/', '', $str);
+    $str = trim($str);
+    // Hapus titik ribuan, ganti koma desimal jadi titik — dukung "1.234,5" → "1234.5"
+    if (str_contains($str, ',') && str_contains($str, '.')) {
+        // Tentukan mana yang jadi desimal: karakter terakhir yang muncul adalah desimal
+        $lastComma = strrpos($str, ',');
+        $lastDot = strrpos($str, '.');
+        if ($lastComma > $lastDot) {
+            // Format ID: 1.234,5 → hapus titik ribuan, koma jd titik
+            $str = str_replace('.', '', $str);
+            $str = str_replace(',', '.', $str);
+        } else {
+            // Format EN: 1,234.5 → hapus koma ribuan
+            $str = str_replace(',', '', $str);
+        }
+    } elseif (str_contains($str, ',')) {
+        $str = str_replace(',', '.', $str);
+    }
+    $str = trim($str);
+    if ($str === '' || ! is_numeric($str)) {
+        return $default;
+    }
+
+    return (float) $str;
+}
+
+/**
  * Format angka: 1.000 (tanpa desimal jika 0), 1,255 / 1,24 (hapus trailing zero).
  * Tanda: titik ribuan, koma desimal.
  */
 function formatQty($value): string
 {
-    $num = (float) $value;
+    $num = normalizeQty($value, 0.0) ?? 0.0;
     $integer = (int) $num;
     $decimal = $num - $integer;
 
-    if (abs($decimal) < 0.001) {
+    if (abs($decimal) < 0.0005) {
         return number_format($integer, 0, ',', '.');
     }
 
@@ -156,6 +197,8 @@ function moduleRoute($action = null, $params = [])
 
 function nominalQRIS($qris_data, $amount)
 {
+    // Normalisasi amount: dukung "2,3" atau float, bulatkan ke rupiah terdekat
+    $amount = normalizeQty($amount, 0) ?? 0;
     $amountStr = (string) (int) round($amount);
     $amountLength = strlen($amountStr);
     $amountField = '54'.str_pad($amountLength, 2, '0', STR_PAD_LEFT).$amountStr;
@@ -221,6 +264,9 @@ function qrCodeDataUri(string $text, int $scale = 5, int $margin = 1): string
         return '';
     }
 
+    // Sanitasi: pastikan string QR tidak mengandung karakter aneh dari locale
+    $text = trim($text);
+
     $options = new QROptions([
         'scale' => $scale,
         'outputInterface' => QRGdImagePNG::class,
@@ -228,7 +274,14 @@ function qrCodeDataUri(string $text, int $scale = 5, int $margin = 1): string
         'bgColor' => [255, 255, 255],
     ]);
 
-    $dataUri = (new QRCode($options))->render($text);
+    try {
+        $dataUri = (new QRCode($options))->render($text);
+    } catch (\Throwable $e) {
+        // Fallback: encode sebagai UTF-8 bersih, hapus karakter non-ASCII bermasalah
+        $clean = mb_convert_encoding($text, 'UTF-8', 'UTF-8');
+        $clean = preg_replace('/[^\x20-\x7E]/u', '', $clean);
+        $dataUri = (new QRCode($options))->render($clean ?: $text);
+    }
 
     return $dataUri;
 }
