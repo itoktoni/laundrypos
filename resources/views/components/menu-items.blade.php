@@ -5,15 +5,24 @@
 @endphp
 
 @foreach($menu as $section)
+    @php
+        // ponytail: section-level roles — skip entire section jika role tidak match
+        if (!empty($section['roles']) && !in_array(auth()->user()->role ?? '', $section['roles'], true)) {
+            continue;
+        }
+        // ponytail: pre-filter items untuk hide section label jika semua items terfilter
+        $visibleItems = collect($section['items'])->filter(function ($i) {
+            return empty($i['roles']) || in_array(auth()->user()->role ?? '', $i['roles'], true);
+        });
+        if ($visibleItems->isEmpty()) {
+            continue;
+        }
+    @endphp
     @if($section['label'])
         <div class="px-4 pt-4 pb-1 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest">{{ $section['label'] }}</div>
     @endif
-    @foreach($section['items'] as $item)
+    @foreach($visibleItems as $item)
         @php
-            // ponytail: filter by roles if defined — settings/website hanya developer
-            if (!empty($item['roles']) && !in_array(auth()->user()->role ?? '', $item['roles'], true)) {
-                continue;
-            }
             $routeName = $item['route'];
             $url = route($routeName);
             $matchRoutes = $item['match'] ?? [];

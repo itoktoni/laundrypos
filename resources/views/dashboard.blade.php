@@ -58,6 +58,51 @@
                     <p class="text-xs text-on-surface-variant">Filter {{ $start }} s/d {{ $end }} — data hanya order yang kamu buat</p>
                 </div>
             </div>
+
+            {{-- Absensi hari ini — staff --}}
+            <div class="bg-surface-container-lowest border {{ $todayAttendance?->attendance_checkin_at ? ($todayAttendance->attendance_checkout_at ? 'border-success/30' : 'border-warning/30') : 'border-error/30' }} rounded-xl p-4 mb-4">
+                <div class="flex items-start justify-between gap-3">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <div class="w-10 h-10 rounded-xl {{ $todayAttendance?->attendance_checkin_at ? ($todayAttendance->attendance_checkout_at ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning') : 'bg-error/10 text-error' }} flex items-center justify-center shrink-0">
+                            <span class="material-symbols-outlined text-xl">{{ $todayAttendance?->attendance_checkin_at ? ($todayAttendance->attendance_checkout_at ? 'task_alt' : 'pending') : 'warning' }}</span>
+                        </div>
+                        <div class="min-w-0">
+                            <p class="text-sm font-bold text-on-surface">
+                                @if(!$todayAttendance?->attendance_checkin_at)
+                                    Belum absen hari ini
+                                @elseif(!$todayAttendance->attendance_checkout_at)
+                                    Sudah check-in {{ $todayAttendance->attendance_checkin_at->format('H:i') }} — belum check-out
+                                @else
+                                    Absen hari ini selesai
+                                @endif
+                            </p>
+                            <p class="text-xs text-on-surface-variant truncate">
+                                @if(!$todayAttendance?->attendance_checkin_at)
+                                    {{ \Carbon\Carbon::today()->format('d/m/Y') }} • Ketuk Absen untuk check-in
+                                @elseif(!$todayAttendance->attendance_checkout_at)
+                                    In {{ $todayAttendance->attendance_checkin_at->format('H:i') }} ({{ $todayAttendance->attendance_checkin_jarak ?? '-' }} m) • {{ $todayAttendance->attendance_status }}
+                                @else
+                                    In {{ $todayAttendance->attendance_checkin_at->format('H:i') }} → Out {{ $todayAttendance->attendance_checkout_at->format('H:i') }} • {{ $todayAttendance->attendance_status }}
+                                @endif
+                            </p>
+                        </div>
+                    </div>
+                    <a href="{{ route('staff-attendance.getCheckin') }}" wire:navigate class="inline-flex items-center gap-1 h-9 px-4 text-sm font-semibold rounded-lg {{ $todayAttendance?->attendance_checkout_at ? 'bg-surface-container border border-outline-variant text-on-surface-variant' : 'bg-primary text-on-primary' }} shrink-0">
+                        <span class="material-symbols-outlined text-[18px]">{{ $todayAttendance?->attendance_checkout_at ? 'visibility' : 'how_to_reg' }}</span>
+                        {{ $todayAttendance?->attendance_checkout_at ? 'Lihat' : (!$todayAttendance?->attendance_checkin_at ? 'Absen' : 'Check-out') }}
+                    </a>
+                </div>
+                @if($recentAttendances->isNotEmpty())
+                    <div class="hidden mt-3 pt-3 border-t border-outline-variant flex flex-wrap gap-1.5">
+                        @foreach($recentAttendances as $att)
+                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs border {{ $att->attendance_status === 'hadir' ? 'bg-success/10 border-success/20 text-success' : ($att->attendance_status === 'izin' ? 'bg-warning/10 border-warning/20 text-warning' : 'bg-error/10 border-error/20 text-error') }}">
+                                {{ $att->attendance_tanggal->format('d/m') }} — {{ $att->attendance_status }} @if($att->attendance_checkin_at) • {{ $att->attendance_checkin_at->format('H:i') }}@endif @if($att->attendance_checkout_at)-{{ $att->attendance_checkout_at->format('H:i') }}@endif
+                            </span>
+                        @endforeach
+                    </div>
+                    <p class="hidden text-[11px] text-on-surface-variant mt-2">Periode {{ $start }}–{{ $end }}: hadir {{ $attendanceSummary['hadir'] }} • izin {{ $attendanceSummary['izin'] }} • sakit {{ $attendanceSummary['sakit'] }} • <a href="{{ route('staff-attendance.getTable') }}" wire:navigate class="text-primary hover:underline">riwayat lengkap →</a></p>
+                @endif
+            </div>
             <div class="flex flex-row flex-wrap gap-3 mb-4">
                 <div class="flex-1 basis-40 min-w-0 bg-surface-container-lowest border border-primary/30 rounded-xl p-4 form-card">
                     <p class="text-xs font-semibold text-on-surface-variant uppercase">Order Hari Ini</p>
@@ -127,8 +172,95 @@
             </div>
         @endif
 
-        {{-- Ringkasan Cards (global, hidden for staff unless owner wants) --}}
-        @if(!$isStaff)
+        {{-- Ringkasan Cards --}}
+        @if($isUser || $isAdmin)
+            <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-4 mb-4 flex items-center gap-3">
+                <span class="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold shrink-0">{{ strtoupper(substr(auth()->user()->name,0,1)) }}</span>
+                <div class="min-w-0">
+                    <p class="text-sm font-semibold text-on-surface">Halo, {{ auth()->user()->name }}</p>
+                    <p class="text-xs text-on-surface-variant">Filter {{ $start }} s/d {{ $end }} • <a href="{{ route('staff-attendance.getTable') }}" wire:navigate class="text-primary hover:underline">riwayat absensi →</a></p>
+                </div>
+            </div>
+
+            {{-- Absensi hari ini — user --}}
+            <div class="bg-surface-container-lowest border {{ $todayAttendance?->attendance_checkin_at ? ($todayAttendance->attendance_checkout_at ? 'border-success/30' : 'border-warning/30') : 'border-error/30' }} rounded-xl p-4 mb-4">
+                <div class="flex items-start justify-between gap-3">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <div class="w-10 h-10 rounded-xl {{ $todayAttendance?->attendance_checkin_at ? ($todayAttendance->attendance_checkout_at ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning') : 'bg-error/10 text-error' }} flex items-center justify-center shrink-0">
+                            <span class="material-symbols-outlined text-xl">{{ $todayAttendance?->attendance_checkin_at ? ($todayAttendance->attendance_checkout_at ? 'task_alt' : 'pending') : 'warning' }}</span>
+                        </div>
+                        <div class="min-w-0">
+                            <p class="text-sm font-bold text-on-surface">
+                                @if(!$todayAttendance?->attendance_checkin_at)
+                                    Belum absen hari ini
+                                @elseif(!$todayAttendance->attendance_checkout_at)
+                                    Sudah check-in {{ $todayAttendance->attendance_checkin_at->format('H:i') }} — belum check-out
+                                @else
+                                    Absen hari ini selesai
+                                @endif
+                            </p>
+                            <p class="text-xs text-on-surface-variant truncate">
+                                @if(!$todayAttendance?->attendance_checkin_at)
+                                    {{ \Carbon\Carbon::today()->format('d/m/Y') }} • Ketuk Absen untuk check-in
+                                @elseif(!$todayAttendance->attendance_checkout_at)
+                                    In {{ $todayAttendance->attendance_checkin_at->format('H:i') }} ({{ $todayAttendance->attendance_checkin_jarak ?? '-' }} m) • {{ $todayAttendance->attendance_status }}
+                                @else
+                                    In {{ $todayAttendance->attendance_checkin_at->format('H:i') }} → Out {{ $todayAttendance->attendance_checkout_at->format('H:i') }} • {{ $todayAttendance->attendance_status }}
+                                @endif
+                            </p>
+                        </div>
+                    </div>
+                    <a href="{{ route('staff-attendance.getCheckin') }}" wire:navigate class="inline-flex items-center gap-1 h-9 px-4 text-sm font-semibold rounded-lg {{ $todayAttendance?->attendance_checkout_at ? 'bg-surface-container border border-outline-variant text-on-surface-variant' : 'bg-primary text-on-primary' }} shrink-0">
+                        <span class="material-symbols-outlined text-[18px]">{{ $todayAttendance?->attendance_checkout_at ? 'visibility' : 'how_to_reg' }}</span>
+                        {{ $todayAttendance?->attendance_checkout_at ? 'Lihat' : (!$todayAttendance?->attendance_checkin_at ? 'Absen' : 'Check-out') }}
+                    </a>
+                </div>
+                @if($recentAttendances->isNotEmpty())
+                    <div class="hidden mt-3 pt-3 border-t border-outline-variant flex flex-wrap gap-1.5">
+                        @foreach($recentAttendances as $att)
+                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs border {{ $att->attendance_status === 'hadir' ? 'bg-success/10 border-success/20 text-success' : ($att->attendance_status === 'izin' ? 'bg-warning/10 border-warning/20 text-warning' : 'bg-error/10 border-error/20 text-error') }}">
+                                {{ $att->attendance_tanggal->format('d/m') }} — {{ $att->attendance_status }} @if($att->attendance_checkin_at) • {{ $att->attendance_checkin_at->format('H:i') }}@endif @if($att->attendance_checkout_at)-{{ $att->attendance_checkout_at->format('H:i') }}@endif
+                            </span>
+                        @endforeach
+                    </div>
+                    <p class="hidden text-[11px] text-on-surface-variant mt-2">Periode {{ $start }}–{{ $end }}: hadir {{ $attendanceSummary['hadir'] }} • izin {{ $attendanceSummary['izin'] }} • sakit {{ $attendanceSummary['sakit'] }} • <a href="{{ route('staff-attendance.getTable') }}" wire:navigate class="text-primary hover:underline">riwayat lengkap →</a></p>
+                @endif
+            </div>
+
+            {{-- User: hanya order + pendapatan, tanpa pengeluaran/laba --}}
+            <div class="flex flex-col sm:flex-row gap-3 mb-4">
+                <div class="flex-1 bg-surface-container-lowest border border-success/30 rounded-xl p-4 form-card">
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="w-10 h-10 rounded-xl bg-success/10 flex items-center justify-center shrink-0">
+                            <span class="material-symbols-outlined text-success text-xl">trending_up</span>
+                        </div>
+                        <span class="text-xs font-semibold text-on-surface-variant uppercase">Total Pendapatan</span>
+                    </div>
+                    <span class="text-2xl font-bold text-success break-words">{{ formatAngka($userStats['pendapatan'] ?? $pemasukan, 'Rp ') }}</span>
+                    <p class="text-xs text-on-surface-variant mt-1">{{ $userStats['selesai'] ?? 0 }} order selesai • periode ini</p>
+                </div>
+                <div class="flex-1 bg-surface-container-lowest border border-primary/30 rounded-xl p-4 form-card">
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                            <span class="material-symbols-outlined text-primary text-xl">receipt_long</span>
+                        </div>
+                        <span class="text-xs font-semibold text-on-surface-variant uppercase">Total Order</span>
+                    </div>
+                    <span class="text-2xl font-bold text-primary break-words">{{ $userStats['bulanIni'] ?? 0 }}</span>
+                    <p class="text-xs text-on-surface-variant mt-1">hari ini: {{ $userStats['hariIni'] ?? 0 }} • total: {{ $userStats['total'] ?? 0 }}</p>
+                </div>
+                <div class="flex-1 bg-surface-container-lowest border border-outline-variant rounded-xl p-4 form-card">
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="w-10 h-10 rounded-xl bg-warning/10 flex items-center justify-center shrink-0">
+                            <span class="material-symbols-outlined text-warning text-xl">pending</span>
+                        </div>
+                        <span class="text-xs font-semibold text-on-surface-variant uppercase">Pending</span>
+                    </div>
+                    <span class="text-2xl font-bold text-warning break-words">{{ $userStats['pending'] ?? 0 }}</span>
+                    <p class="text-xs text-on-surface-variant mt-1">belum selesai</p>
+                </div>
+            </div>
+        @elseif($isPrivileged)
         <div class="flex flex-col sm:flex-row gap-3 mb-4">
             <div class="flex-1 bg-surface-container-lowest border border-success/30 rounded-xl p-4 form-card">
                 <div class="flex items-center gap-3 mb-2">
@@ -176,6 +308,68 @@
                         <span class="material-symbols-outlined text-primary text-xl">donut_small</span> Status Order (periode ini)
                     </h3>
                     <div class="w-full h-64 relative"><canvas id="staffStatusChart"></canvas></div>
+                </div>
+            </div>
+        @elseif($isUser || $isAdmin)
+            {{-- User charts: order only, tanpa pengeluaran --}}
+            <div class="flex flex-col lg:flex-row gap-4 mb-4">
+                <div class="flex-1 min-w-0 bg-surface-container-lowest border border-outline-variant rounded-xl p-4 form-card overflow-hidden">
+                    <h3 class="font-title-md text-title-md text-on-surface pb-3 mb-3 border-b border-outline-variant flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary text-xl">trending_up</span> Order Harian (7 hari)
+                    </h3>
+                    <div class="w-full h-64 relative"><canvas id="userDailyChart"></canvas></div>
+                </div>
+                <div class="flex-1 min-w-0 bg-surface-container-lowest border border-outline-variant rounded-xl p-4 form-card overflow-hidden">
+                    <h3 class="font-title-md text-title-md text-on-surface pb-3 mb-3 border-b border-outline-variant flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary text-xl">donut_small</span> Status Order (periode ini)
+                    </h3>
+                    <div class="w-full h-64 relative"><canvas id="userStatusChart"></canvas></div>
+                </div>
+            </div>
+            <div class="flex flex-col lg:flex-row gap-4 mb-4">
+                <div class="flex-1 min-w-0 bg-surface-container-lowest border border-outline-variant rounded-xl p-4 form-card overflow-hidden">
+                    <h3 class="font-title-md text-title-md text-on-surface pb-3 mb-3 border-b border-outline-variant flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary text-xl">payment</span> Pendapatan per Metode Bayar
+                    </h3>
+                    <div class="w-full h-64 relative"><canvas id="userIncomeMethodChart"></canvas></div>
+                </div>
+                <div class="flex-1 min-w-0 bg-surface-container-lowest border border-outline-variant rounded-xl p-4 form-card">
+                    <h3 class="font-title-md text-title-md text-on-surface pb-3 mb-3 border-b border-outline-variant flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary text-xl">receipt_long</span> Order Terbaru
+                    </h3>
+                    <div class="flex flex-col gap-2 sm:hidden">
+                        @forelse($userRecentOrders as $o)
+                            <div class="rounded-xl border border-outline-variant/60 px-3 py-2.5">
+                                <div class="flex items-center justify-between gap-2 mb-1">
+                                    <span class="font-mono text-xs font-bold truncate">{{ $o->order_code }}</span>
+                                    <span class="text-xs font-bold shrink-0">{{ formatAngka($o->order_total, 'Rp ') }}</span>
+                                </div>
+                                <div class="flex items-center justify-between gap-2">
+                                    <span class="text-[11px] text-on-surface-variant truncate">{{ $o->hasCustomer?->customer_nama ?? $o->order_walkin_nama ?? '-' }}</span>
+                                    <span class="badge badge-sm shrink-0" style="background: {{ $o->hasStatus?->order_status_warna ?? '#999' }}; color:#fff">{{ $o->hasStatus?->order_status_nama ?? '-' }}</span>
+                                </div>
+                            </div>
+                        @empty
+                            <p class="text-center py-6 text-on-surface-variant text-sm">Belum ada order</p>
+                        @endforelse
+                    </div>
+                    <div class="overflow-x-auto hidden sm:block">
+                        <table class="w-full text-sm">
+                            <thead><tr class="text-left text-xs text-on-surface-variant uppercase border-b border-outline-variant"><th class="pb-3 pr-4">Kode</th><th class="pb-3 pr-4">Pelanggan</th><th class="pb-3 pr-4">Status</th><th class="pb-3 text-right">Total</th></tr></thead>
+                            <tbody>
+                            @forelse($userRecentOrders as $o)
+                                <tr class="border-b border-outline-variant/50">
+                                    <td class="py-3 pr-4 font-mono text-xs">{{ $o->order_code }}</td>
+                                    <td class="py-3 pr-4">{{ $o->hasCustomer?->customer_nama ?? $o->order_walkin_nama ?? '-' }}</td>
+                                    <td class="py-3 pr-4"><span class="badge badge-sm" style="background: {{ $o->hasStatus?->order_status_warna ?? '#999' }}; color:#fff">{{ $o->hasStatus?->order_status_nama ?? '-' }}</span></td>
+                                    <td class="py-3 text-right font-mono">{{ formatAngka($o->order_total, 'Rp ') }}</td>
+                                </tr>
+                            @empty
+                                <tr><td colspan="4" class="text-center py-6 text-on-surface-variant text-sm">Belum ada order</td></tr>
+                            @endforelse
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         @else
@@ -274,7 +468,7 @@
                 </div>
             </div>
         @endif
-        @if(!$isStaff && $topStaff->isNotEmpty())
+        @if($isPrivileged && $topStaff->isNotEmpty())
         <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-4 form-card mt-4">
             <h3 class="font-title-md text-title-md text-on-surface pb-3 mb-3 border-b border-outline-variant flex items-center gap-2">
                 <span class="material-symbols-outlined text-primary text-xl">leaderboard</span> Top Staff Periode Ini
@@ -323,9 +517,52 @@
             return;
         }
         const isStaff = @json($isStaff);
+        const isUser = @json($isUser ?? false);
 
         // Destroy previous
-        ['_cfChart','_ecChart','_imChart','_staffDaily','_staffStatus'].forEach(k => { if (window[k]) { try { window[k].destroy(); } catch(e){} } });
+        ['_cfChart','_ecChart','_imChart','_staffDaily','_staffStatus','_userDaily','_userStatus','_userIncome'].forEach(k => { if (window[k]) { try { window[k].destroy(); } catch(e){} } });
+
+        if (isUser) {
+            const dailyData = @json($userDailyOrders ?? []);
+            const labels = Object.keys(dailyData).map(d => d.substring(8));
+            const vals = Object.values(dailyData);
+            const el1 = document.getElementById('userDailyChart');
+            if (el1) {
+                window._userDaily = new window.Chart(el1, {
+                    type: 'bar',
+                    data: { labels, datasets: [{ label: 'Order', data: vals, backgroundColor: '#00288e', borderRadius: 4 }] },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } }, x: { ticks: { font: { size: 10 } } } } }
+                });
+            }
+            const statusData = @json($userStatusDist ?? []);
+            const el2 = document.getElementById('userStatusChart');
+            if (el2) {
+                const has = Object.keys(statusData).length > 0;
+                window._userStatus = new window.Chart(el2, {
+                    type: 'doughnut',
+                    data: { labels: has ? Object.keys(statusData) : ['Belum ada data'], datasets: [{ data: has ? Object.values(statusData) : [1], backgroundColor: has ? ['#2563eb','#f59e0b','#22c55e','#ef4444','#8b5cf6','#06b6d4','#eab308'] : ['#e5e7eb'] }] },
+                    options: { responsive: true, maintainAspectRatio: false, cutout: '62%', plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, font: { size: 11 } } } } }
+                });
+            }
+            const incomeMethodData = @json($pemasukanByMetode);
+            const methodLabels = { tunai: 'Tunai', transfer: 'Transfer', dompet_digital: 'Dompet Digital', qris: 'QRIS', cash: 'Tunai' };
+            const imEl = document.getElementById('userIncomeMethodChart');
+            if (imEl) {
+                const hasIm = Object.keys(incomeMethodData).length > 0;
+                window._userIncome = new window.Chart(imEl, {
+                    type: 'doughnut',
+                    data: {
+                        labels: hasIm ? Object.keys(incomeMethodData).map(k => methodLabels[k] || k) : ['Belum ada data'],
+                        datasets: [{ data: hasIm ? Object.values(incomeMethodData) : [1], backgroundColor: hasIm ? ['#22c55e','#3b82f6','#8b5cf6','#f59e0b','#06b6d4'] : ['#e5e7eb'] }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false, cutout: '62%',
+                        plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, font: { size: 11 } } }, tooltip: { callbacks: { label: ctx => ctx.label + ': Rp ' + ctx.parsed.toLocaleString('id-ID') } } }
+                    }
+                });
+            }
+            return;
+        }
 
         if (isStaff) {
             const dailyData = @json($staffDailyOrders ?? []);

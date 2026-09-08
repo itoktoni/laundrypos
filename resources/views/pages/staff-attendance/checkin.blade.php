@@ -35,25 +35,22 @@
                 @csrf
                 <input type="hidden" name="lat" id="checkin-lat">
                 <input type="hidden" name="lng" id="checkin-lng">
-                <h3 class="font-semibold mb-3">Check-in Masuk</h3>
-                <button type="submit" id="btn-checkin" disabled class="w-full py-3 rounded-xl font-semibold bg-primary text-on-primary disabled:opacity-40 flex items-center justify-center gap-2">
-                    <span class="material-symbols-outlined">login</span> Check-in Masuk
-                </button>
-                <p class="text-xs text-on-surface-variant mt-2 text-center" id="checkin-hint">Menunggu lokasi valid…</p>
+                <h3 class="font-semibold mb-3 flex items-center gap-2"><span class="material-symbols-outlined text-primary">login</span> Check-in Masuk</h3>
+                <x-button type="submit" id="btn-checkin" variant="primary" size="lg" icon="login" class="w-full !h-12 !text-base hidden" disabled>Check-in Masuk</x-button>
+                <p class="font-label-caps text-label-caps text-on-surface-variant mt-2 text-center" id="checkin-hint">Menunggu lokasi…</p>
             </form>
         @elseif(!$hasOut)
-            <div class="bg-success/10 border border-success/20 rounded-2xl p-4 mb-4 text-sm">
+            <div class="bg-success/10 border border-success/20 rounded-2xl p-4 mb-4 text-sm flex items-center gap-2">
+                <span class="material-symbols-outlined text-success">check_circle</span>
                 Sudah check-in <b>{{ $existing->attendance_checkin_at->format('H:i') }}</b> ({{ $existing->attendance_checkin_jarak }} m) — silakan checkout saat pulang.
             </div>
             <form method="POST" action="{{ route('staff-attendance.postCheckout') }}" id="form-checkout" class="bg-surface-container-lowest border border-outline-variant rounded-2xl p-4">
                 @csrf
                 <input type="hidden" name="lat" id="checkout-lat">
                 <input type="hidden" name="lng" id="checkout-lng">
-                <h3 class="font-semibold mb-3">Check-out Pulang</h3>
-                <button type="submit" id="btn-checkout" disabled class="w-full py-3 rounded-xl font-semibold bg-error text-on-error disabled:opacity-40 flex items-center justify-center gap-2">
-                    <span class="material-symbols-outlined">logout</span> Check-out Pulang
-                </button>
-                <p class="text-xs text-on-surface-variant mt-2 text-center" id="checkout-hint">Menunggu lokasi valid…</p>
+                <h3 class="font-semibold mb-3 flex items-center gap-2"><span class="material-symbols-outlined text-error">logout</span> Check-out Pulang</h3>
+                <x-button type="submit" id="btn-checkout" variant="error" size="lg" icon="logout" class="w-full !h-12 !text-base hidden" disabled>Check-out Pulang</x-button>
+                <p class="font-label-caps text-label-caps text-on-surface-variant mt-2 text-center" id="checkout-hint">Menunggu lokasi…</p>
             </form>
         @else
             <div class="bg-success/10 border border-success/20 rounded-2xl p-6 text-center">
@@ -148,8 +145,22 @@
             const btnOut = document.getElementById('btn-checkout');
             const hintIn = document.getElementById('checkin-hint');
             const hintOut = document.getElementById('checkout-hint');
-            if (btnIn) { btnIn.disabled = !valid; if (hintIn) hintIn.textContent = valid ? 'Lokasi valid — bisa check-in' : 'Mendekat ke toko (< ' + radius + ' m)'; }
-            if (btnOut) { btnOut.disabled = !valid; if (hintOut) hintOut.textContent = valid ? 'Lokasi valid — bisa check-out' : 'Mendekat ke toko'; }
+            if (btnIn) {
+                btnIn.disabled = !valid;
+                btnIn.classList.toggle('hidden', !valid);
+                if (hintIn) {
+                    hintIn.textContent = valid ? 'Lokasi valid — bisa check-in' : 'Di luar radius (' + curJarak + ' m) — mendekat ke toko (< ' + radius + ' m)';
+                    hintIn.className = valid ? 'font-label-caps text-label-caps text-success mt-2 text-center' : 'font-label-caps text-label-caps text-error mt-2 text-center';
+                }
+            }
+            if (btnOut) {
+                btnOut.disabled = !valid;
+                btnOut.classList.toggle('hidden', !valid);
+                if (hintOut) {
+                    hintOut.textContent = valid ? 'Lokasi valid — bisa check-out' : 'Di luar radius (' + curJarak + ' m) — mendekat ke toko';
+                    hintOut.className = valid ? 'font-label-caps text-label-caps text-success mt-2 text-center' : 'font-label-caps text-label-caps text-error mt-2 text-center';
+                }
+            }
 
             if (myMarker) map.removeLayer(myMarker);
             myMarker = L.marker([lat, lng]).addTo(map).bindPopup('Kamu').openPopup();

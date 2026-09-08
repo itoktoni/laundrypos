@@ -51,7 +51,6 @@
 
             @if ($laundries->isEmpty())
                 <div class="bg-surface-container-lowest border border-outline-variant rounded-2xl p-10 text-center">
-                    <span class="material-symbols-outlined text-5xl text-outline">store_off</span>
                     <h3 class="font-semibold text-on-surface mt-3">Belum ada cabang untuk akun ini</h3>
                     <p class="text-sm text-on-surface-variant mt-1 max-w-md mx-auto">Hubungi admin/owner untuk ditambahkan ke cabang. Kamu akan otomatis masuk setelah di-assign.</p>
                 </div>

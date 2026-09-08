@@ -20,8 +20,8 @@ class StaffAttendanceController extends Controller
     protected function getData()
     {
         $q = $this->model->with(['hasUser', 'hasLaundry'])->orderByDesc('attendance_tanggal')->orderByDesc('attendance_checkin_at');
-        // Staff lihat hanya miliknya
-        if ((auth()->user()->role ?? '') === 'editor') {
+        // Staff/user lihat hanya miliknya — admin/developer lihat semua
+        if (in_array(auth()->user()->role ?? '', ['editor', 'user'], true)) {
             $q->where('attendance_id_user', auth()->id());
         }
         return $q;

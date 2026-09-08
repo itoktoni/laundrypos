@@ -181,7 +181,7 @@ use App\Livewire\Pos\PosTerminal;
             @endforelse
         </div>
 
-        <div class="shrink-0 max-lg:sticky max-lg:bottom-16 max-lg:z-40 max-lg:bg-surface-container-lowest max-lg:border-t max-lg:border-outline-variant max-lg:p-4 max-lg:rounded-t-2xl max-lg:shadow-[0_-8px_24px_rgba(0,0,0,0.12)] md:max-lg:bottom-0">
+        <div class="shrink-0 sticky bottom-16 z-40 max-lg:bg-surface-container-lowest max-lg:border-t max-lg:border-outline-variant max-lg:p-4 max-lg:rounded-t-2xl max-lg:shadow-[0_-8px_24px_rgba(0,0,0,0.12)] lg:bottom-4 lg:z-20 lg:bg-surface-container-lowest lg:border lg:border-outline-variant/60 lg:p-3 lg:rounded-2xl lg:shadow-[0_-4px_12px_rgba(0,0,0,0.06)]">
         {{-- Promo --}}
         <div class="mb-4">
             <label class="text-xs text-on-surface-variant mb-1 block">Promo</label>

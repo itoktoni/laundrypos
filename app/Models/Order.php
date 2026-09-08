@@ -23,7 +23,12 @@ class Order extends BaseModel
 
     protected $primaryKey = 'order_id';
 
-    public static $filterColumns = ['order_code'];
+    public static $filterColumns = [
+        'order_code' => 'Kode',
+        'pelanggan' => 'Pelanggan',
+        'hasCustomer.customer_nama' => 'Pelanggan (Member)',
+        'order_walkin_nama' => 'Walk-in',
+    ];
 
     public static $sortColumns = ['order_code', 'created_at'];
 

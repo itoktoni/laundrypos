@@ -4,7 +4,12 @@
     <x-breadcrumb :items="[['url' => '/dashboard', 'label' => 'Home'], ['url' => '', 'label' => moduleLabel()]]" />
     <div class="content mt-4 lg:mt-0">
         <div class="mb-3 flex gap-2 flex-wrap">
-            <a href="{{ route('staff-schedule.getImport') }}" class="btn btn-soft gap-1.5"><span class="material-symbols-outlined text-[18px]">upload</span> Import CSV</a>
+            <a href="{{ route('staff-schedule.getImport') }}" wire:navigate class="inline-flex items-center gap-2 h-10 px-5 text-sm font-semibold rounded-lg border border-outline-variant text-on-surface-variant hover:bg-surface-container transition-all">
+                <span class="material-symbols-outlined text-xl">upload</span> Import CSV
+            </a>
+            <a href="{{ route('staff-schedule.getTemplate') }}" class="inline-flex items-center gap-2 h-10 px-5 text-sm font-semibold rounded-lg border border-outline-variant text-on-surface-variant hover:bg-surface-container transition-all">
+                <span class="material-symbols-outlined text-xl">download</span> Template
+            </a>
         </div>
 
         <x-filter :per-page="25" :fields="$fields">

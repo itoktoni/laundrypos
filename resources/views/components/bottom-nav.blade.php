@@ -1,18 +1,15 @@
 @php
-    $bottomNav = config('menu.bottom_nav');
+    $bottomNav = collect(config('menu.bottom_nav'))->filter(fn ($i) => empty($i['roles']) || in_array(auth()->user()->role ?? '', $i['roles'], true))->values();
 @endphp
 
 <nav class="md:hidden fixed inset-x-0 bottom-0 z-50 h-16 bg-surface-container-lowest border-t border-outline-variant shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
     <div class="flex items-center justify-around h-16 px-2">
         @foreach($bottomNav as $index => $item)
             @php
-                if (!empty($item['roles']) && !in_array(auth()->user()->role ?? '', $item['roles'], true)) {
-                    continue;
-                }
                 $routeName = $item['route'];
                 $url = route($routeName);
                 $isActive = request()->routeIs($routeName) || request()->routeIs($routeName . '.*');
-                $isCenter = $index === 2;
+                $isCenter = $index === intdiv($bottomNav->count(), 2);
             @endphp
 
             @if($isCenter)

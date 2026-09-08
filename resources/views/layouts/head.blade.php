@@ -15,7 +15,9 @@
     @endphp
     <title>{{ config('website.name', $title ?? 'CMS') }}</title>
     <link rel="icon" href="{{ $faviconUrl }}" sizes="any">
-    {{-- Fonts self-hosted via @fontsource (offline-ready) --}}
+    {{-- Fonts self-hosted via @fontsource (offline-ready) + CDN fallback untuk Material Symbols --}}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" />
     @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/notifications.js'])
     @livewireStyles
     <script src="{{ asset('js/table.js') }}"></script>

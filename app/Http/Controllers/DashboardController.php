@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Expense;
 use App\Models\Order;
 use App\Models\OrderStatus;
+use App\Models\StaffAttendance;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -14,7 +15,13 @@ class DashboardController extends Controller
     {
         $laundryId = session('laundry_id');
         $user = $request->user();
-        $isStaff = ($user->role ?? '') === 'editor';
+        $role = $user->role ?? '';
+        $isStaff = $role === 'editor';
+        $isUser = $role === 'user';
+        $isAdmin = $role === 'admin';
+        $isDeveloper = $role === 'developer';
+        $isPrivileged = $isDeveloper; // hanya developer lihat keuangan & penggajian
+        $isCashier = in_array($role, ['admin','editor','user'], true); // kasir/operasional
         $start = $request->input('start_date', Carbon::now()->startOfMonth()->toDateString());
         $end = $request->input('end_date', Carbon::now()->endOfMonth()->toDateString());
 
@@ -80,12 +87,49 @@ class DashboardController extends Controller
             ->limit(10)
             ->get();
 
+        // ponytail: absensi — untuk staff/user biar tau sudah absen atau belum
+        $todayAttendance = null;
+        $recentAttendances = collect();
+        $attendanceSummary = ['hadir' => 0, 'izin' => 0, 'sakit' => 0, 'alpha' => 0];
+        if (in_array($role, ['editor', 'user'], true)) {
+            $todayAttendance = StaffAttendance::withoutGlobalScopes()
+                ->where('attendance_id_laundry', $laundryId)
+                ->where('attendance_id_user', $user->id)
+                ->where('attendance_tanggal', Carbon::today()->toDateString())
+                ->first();
+            $recentAttendances = StaffAttendance::withoutGlobalScopes()
+                ->where('attendance_id_laundry', $laundryId)
+                ->where('attendance_id_user', $user->id)
+                ->whereBetween('attendance_tanggal', [$start, $end])
+                ->orderByDesc('attendance_tanggal')
+                ->limit(7)
+                ->get();
+            $counts = StaffAttendance::withoutGlobalScopes()
+                ->where('attendance_id_laundry', $laundryId)
+                ->where('attendance_id_user', $user->id)
+                ->whereBetween('attendance_tanggal', [$start, $end])
+                ->selectRaw('attendance_status, count(*) as c')
+                ->groupBy('attendance_status')
+                ->pluck('c', 'attendance_status');
+            $attendanceSummary = [
+                'hadir' => (int) ($counts['hadir'] ?? 0),
+                'izin' => (int) ($counts['izin'] ?? 0),
+                'sakit' => (int) ($counts['sakit'] ?? 0),
+                'alpha' => 0,
+            ];
+        }
+
         // Staff-specific stats & charts (editor) — khusus order milik staff
         $staffStats = null;
         $staffRecentOrders = collect();
         $staffDailyOrders = collect();
         $staffStatusDist = collect();
         $topStaff = collect();
+        // ponytail: dashboard untuk user (role=user) — hanya order + pendapatan, tanpa pengeluaran
+        $userStats = null;
+        $userRecentOrders = collect();
+        $userDailyOrders = collect();
+        $userStatusDist = collect();
         $staffTarget = (int) config('website.staff_target', 100);
         $staffFee = (int) config('website.staff_fee', 1000);
         if ($isStaff) {
@@ -120,6 +164,27 @@ class DashboardController extends Controller
                 ->with('hasStatus')
                 ->get()->groupBy(fn($o) => $o->hasStatus?->order_status_nama ?? 'Tanpa Status')
                 ->map->count();
+        } elseif ($isUser) {
+            // User: ringkas — order + pendapatan saja, tanpa pengeluaran/laba
+            $userStats = [
+                'hariIni' => Order::where('order_id_laundry', $laundryId)->whereDate('created_at', Carbon::today())->count(),
+                'bulanIni' => Order::where('order_id_laundry', $laundryId)->whereBetween('created_at', [$start.' 00:00:00', $end.' 23:59:59'])->count(),
+                'total' => Order::where('order_id_laundry', $laundryId)->count(),
+                'selesai' => Order::where('order_id_laundry', $laundryId)->where('order_status_id', $selesaiId)->count(),
+                'pendapatan' => (int) $pemasukan,
+                'pending' => Order::where('order_id_laundry', $laundryId)->whereNotIn('order_status_id', [$selesaiId])->count(),
+            ];
+            $userRecentOrders = Order::where('order_id_laundry', $laundryId)->with(['hasCustomer', 'hasStatus'])->latest()->limit(8)->get();
+            $dailyAll = Order::where('order_id_laundry', $laundryId)
+                ->where('created_at', '>=', Carbon::now()->subDays(6)->startOfDay())
+                ->selectRaw('DATE(created_at) as date, count(*) as total')
+                ->groupBy('date')->pluck('total', 'date');
+            $userDailyOrders = $dates->mapWithKeys(fn($d) => [$d => (int) $dailyAll->get($d, 0)]);
+            $userStatusDist = Order::where('order_id_laundry', $laundryId)
+                ->whereBetween('created_at', [$start.' 00:00:00', $end.' 23:59:59'])
+                ->with('hasStatus')
+                ->get()->groupBy(fn($o) => $o->hasStatus?->order_status_nama ?? 'Tanpa Status')
+                ->map->count();
         } else {
             // Top staff leaderboard for admin/owner — hitung bonus per staff juga
             $topStaff = Order::where('order_id_laundry', $laundryId)
@@ -138,7 +203,10 @@ class DashboardController extends Controller
         return view('dashboard', compact(
             'start', 'end', 'pemasukan', 'pengeluaran', 'labaRugi',
             'pemasukanByMetode', 'pengeluaranByKategori', 'cashFlow', 'recentExpenses',
-            'isStaff', 'staffStats', 'staffRecentOrders', 'staffDailyOrders', 'staffStatusDist', 'topStaff'
+            'isStaff', 'isUser', 'isAdmin', 'isDeveloper', 'isPrivileged', 'isCashier',
+            'staffStats', 'staffRecentOrders', 'staffDailyOrders', 'staffStatusDist', 'topStaff',
+            'userStats', 'userRecentOrders', 'userDailyOrders', 'userStatusDist',
+            'todayAttendance', 'recentAttendances', 'attendanceSummary'
         ));
     }
 }
