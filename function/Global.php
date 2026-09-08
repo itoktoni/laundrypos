@@ -45,9 +45,11 @@ function formatDate($value, $datetime = false)
     return $value ?: null;
 }
 
-function formatAngka(int $value, $simbol = null)
+function formatAngka(mixed $value, $simbol = null)
 {
-    return $simbol.number_format($value, 0, ',', '.');
+    $num = normalizeQty($value, 0) ?? 0;
+    $num = (int) round($num);
+    return $simbol.number_format($num, 0, ',', '.');
 }
 
 /**

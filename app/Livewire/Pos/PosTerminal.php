@@ -9,6 +9,7 @@ use App\Models\Kategori;
 use App\Models\Order;
 use App\Models\Product;
 use Illuminate\Validation\ValidationException;
+use Livewire\Attributes\Computed;
 use Livewire\Component;
 
 class PosTerminal extends Component
@@ -173,6 +174,34 @@ class PosTerminal extends Component
         }
     }
 
+    public function updatedCart(): void
+    {
+        foreach ($this->cart as $i => $line) {
+            $raw = $line['qty'] ?? null;
+            // Biarkan input intermediate seperti "", "2,", "2." tetap apa adanya agar user bisa lanjut ketik
+            if (is_string($raw)) {
+                $trim = trim($raw);
+                if ($trim === '' || $trim === ',' || $trim === '.' || $trim === '-' || str_ends_with($trim, ',') || str_ends_with($trim, '.')) {
+                    continue;
+                }
+            }
+            $qty = normalizeQty($raw, null);
+            if ($qty === null) {
+                continue;
+            }
+            if ($qty < 0.5) {
+                $qty = 0.5;
+            }
+            $qty = round(min(999, $qty), 3);
+            if (! isset($line['qty']) || $qty != (float) normalizeQty($line['qty'], $qty)) {
+                $this->cart[$i]['qty'] = $qty;
+            }
+        }
+        if ($this->discountId) {
+            $this->applyPromo();
+        }
+    }
+
     public function removeLine(int $index): void
     {
         unset($this->cart[$index]);
@@ -184,14 +213,26 @@ class PosTerminal extends Component
         }
     }
 
+    #[Computed]
+    public function subtotal(): float
+    {
+        return collect($this->cart)->sum(fn ($line) => (float) $line['harga'] * (float) normalizeQty($line['qty'], 0));
+    }
+
+    #[Computed]
+    public function total(): float
+    {
+        return max(0, $this->subtotal - $this->discountAmount);
+    }
+
     public function getSubtotalProperty(): float
     {
-        return collect($this->cart)->sum(fn ($line) => $line['harga'] * $line['qty']);
+        return $this->subtotal;
     }
 
     public function getTotalProperty(): float
     {
-        return max(0, $this->subtotal - $this->discountAmount);
+        return $this->total;
     }
 
     public function getEstimasiJamProperty(): int

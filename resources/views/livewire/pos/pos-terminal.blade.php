@@ -157,7 +157,7 @@ use App\Livewire\Pos\PosTerminal;
                     <div class="flex-1 min-w-0">
                         <p class="text-sm font-bold truncate">{{ $line['nama'] }}</p>
                         <p class="text-[11px] text-on-surface-variant">{{ formatAngka($line['harga']) }} / {{ $line['satuan'] }}</p>
-                        <p class="text-sm font-bold text-primary mt-0.5">{{ formatAngka($line['harga'] * $line['qty']) }}</p>
+                        <p class="text-sm font-bold text-primary mt-0.5">{{ formatAngka((float) $line['harga'] * (normalizeQty($line['qty'], 0) ?? 0)) }}</p>
                     </div>
                     <div class="flex flex-col items-end gap-1.5 shrink-0">
                         <button type="button" wire:click="removeLine({{ $i }})" class="w-7 h-7 rounded-full hover:bg-error/10 text-on-surface-variant hover:text-error flex items-center justify-center transition-colors" title="Hapus">
@@ -165,9 +165,8 @@ use App\Livewire\Pos\PosTerminal;
                         </button>
                         <div class="flex items-center gap-0.5 rounded-full border border-outline-variant p-0.5">
                             <button type="button" wire:click="bumpQty({{ $i }}, -1)" class="w-7 h-7 rounded-full bg-surface-container hover:bg-outline-variant flex items-center justify-center text-base font-bold transition-colors">&minus;</button>
-                            <input type="text" inputmode="decimal" value="{{ formatQty($line['qty']) }}"
-                                   wire:change="setQty({{ $i }}, $event.target.value)"
-                                   wire:keydown.enter="setQty({{ $i }}, $event.target.value)"
+                            <input type="text" inputmode="decimal" wire:model.live.debounce.400ms="cart.{{ $i }}.qty"
+                                   wire:blur="setQty({{ $i }}, $event.target.value)"
                                    class="w-14 text-center text-sm font-bold bg-transparent border-0 focus:ring-0 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                    title="Edit qty — bisa koma (2,3)" placeholder="1">
                             <button type="button" wire:click="bumpQty({{ $i }}, 1)" class="w-7 h-7 rounded-full bg-primary text-on-primary hover:bg-primary/90 flex items-center justify-center text-base font-bold transition-colors">+</button>
