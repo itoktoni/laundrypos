@@ -75,7 +75,7 @@ return [
         [
             'label' => 'Settings',
             'items' => [
-                ['route' => 'settings.website', 'icon' => 'language', 'label' => 'Website'],
+                ['route' => 'settings.website', 'icon' => 'language', 'label' => 'Website', 'roles' => ['developer']],
                 ['route' => 'native-bridge-test', 'icon' => 'phone_android', 'label' => 'NativeBridge Test'],
             ],
         ],
@@ -86,7 +86,7 @@ return [
         ['route' => 'pos.index', 'icon' => 'point_of_sale', 'label' => 'POS'],
         ['route' => 'order.getTable', 'icon' => 'receipt_long', 'label' => 'Orders'],
         ['route' => 'customer.getTable', 'icon' => 'people', 'label' => 'Customers'],
-        ['route' => 'settings.website', 'icon' => 'settings', 'label' => 'Settings'],
+        ['route' => 'settings.website', 'icon' => 'settings', 'label' => 'Settings', 'roles' => ['developer']],
     ],
 
 ];

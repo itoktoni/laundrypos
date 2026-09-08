@@ -36,6 +36,12 @@ Route::middleware(['auth'])->group(function () {
     Route::auto('/laundries', 'LaundriesController', ['name' => 'laundries']);
 });
 
+// Global settings — tidak butuh pilih cabang, hanya developer
+Route::middleware(['auth', 'verified', 'developer'])->group(function () {
+    Route::get('/settings/website', [WebsiteSettingController::class, 'index'])->name('settings.website');
+    Route::post('/settings/website', [WebsiteSettingController::class, 'save'])->name('settings.website.save');
+});
+
 Route::middleware(['auth', 'verified', 'access', 'laundry.selected'])->group(function () {
 
     Route::get('dashboard', DashboardController::class)->name('dashboard');
@@ -85,9 +91,6 @@ Route::middleware(['auth', 'verified', 'access', 'laundry.selected'])->group(fun
     Route::get('/native-bridge-test', function () {
         return view('pages.settings.native-bridge-test');
     })->name('native-bridge-test');
-
-    Route::get('/settings/website', [WebsiteSettingController::class, 'index'])->name('settings.website');
-    Route::post('/settings/website', [WebsiteSettingController::class, 'save'])->name('settings.website.save');
 
     Route::prefix('notifications-web')->group(function () {
         Route::get('/', function (Request $request) {

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\AccessMiddleware;
+use App\Http\Middleware\EnsureDeveloper;
 use App\Http\Middleware\EnsureLaundrySelected;
 use App\Http\Middleware\VerifyVerified;
 use App\Providers\ModelAliasServiceProvider;
@@ -30,7 +31,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'access' => AccessMiddleware::class,
             'verified' => VerifyVerified::class,
             'laundry.selected' => EnsureLaundrySelected::class,
-            // 'skip_verified' => SkipVerifiedCheck::class,
+            'developer' => EnsureDeveloper::class,
         ]);
 
         $middleware->validateCsrfTokens(except: [

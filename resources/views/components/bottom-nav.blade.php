@@ -6,6 +6,9 @@
     <div class="flex items-center justify-around h-16 px-2">
         @foreach($bottomNav as $index => $item)
             @php
+                if (!empty($item['roles']) && !in_array(auth()->user()->role ?? '', $item['roles'], true)) {
+                    continue;
+                }
                 $routeName = $item['route'];
                 $url = route($routeName);
                 $isActive = request()->routeIs($routeName) || request()->routeIs($routeName . '.*');

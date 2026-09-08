@@ -10,6 +10,10 @@
     @endif
     @foreach($section['items'] as $item)
         @php
+            // ponytail: filter by roles if defined — settings/website hanya developer
+            if (!empty($item['roles']) && !in_array(auth()->user()->role ?? '', $item['roles'], true)) {
+                continue;
+            }
             $routeName = $item['route'];
             $url = route($routeName);
             $matchRoutes = $item['match'] ?? [];
