@@ -27,7 +27,7 @@
                     </span>
                 </div>
                 <p class="text-sm text-on-surface-variant mt-1">
-                    Dibuat {{ formatDate($order->created_at, true) }} oleh {{ $order->hasUser?->name ?? '-' }}
+                    Dibuat {{ formatDate($order->created_at) }} oleh {{ $order->hasUser?->name ?? '-' }}@if($order->hasLaundry) · {{ $order->hasLaundry->laundry_nama }}@endif
                 </p>
             </div>
 
@@ -185,7 +185,8 @@
                         <p class="text-sm font-medium">{{ $customerNama }}</p>
                         <p class="text-sm text-on-surface-variant">{{ $customerTelepon }}</p>
                     </div>
-                    <div>
+                    {{-- Estimasi Selesai di-hide sesuai request --}}
+                    <div class="hidden">
                         <p class="text-xs uppercase tracking-wide text-on-surface-variant mb-2">Estimasi Selesai</p>
                         <p class="text-sm font-medium">{{ formatDate($order->order_estimasi_selesai, true) }}</p>
                         <p class="text-sm text-on-surface-variant">± {{ ceil(abs($order->created_at->diffInHours($order->order_estimasi_selesai)) / 24) }} hari kerja</p>

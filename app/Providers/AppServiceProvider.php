@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -74,6 +75,14 @@ class AppServiceProvider extends ServiceProvider
         }
 
         Event::listen(NotificationSent::class, SendNotificationViaCentrifugo::class);
+
+        // ponytail: developer superadmin — bypass semua Gate policy (BasePolicy, dll)
+        Gate::before(function ($user, string $ability) {
+            if (($user->role ?? '') === 'developer') {
+                return true;
+            }
+            return null;
+        });
 
         // URL::forceScheme('https');
         // Blaze::optimize()->in(resource_path('views/components'));

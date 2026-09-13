@@ -242,6 +242,17 @@ class PosTerminal extends Component
 
     public function confirmOrder()
     {
+        return $this->confirmOrderWithCart($this->cart);
+    }
+
+    public function confirmOrderClient(array $clientCart)
+    {
+        $this->cart = $clientCart;
+        return $this->confirmOrderWithCart($clientCart);
+    }
+
+    private function confirmOrderWithCart(array $cartData)
+    {
         $this->errors = [];
 
         if ($this->customerId) {
@@ -262,14 +273,13 @@ class PosTerminal extends Component
                 'metode_pembayaran' => 'tunai',
                 'discount_id' => $this->discountId,
                 'diskon' => $this->discountAmount,
-                'items' => collect($this->cart)->map(fn ($line) => [
-                    'product_id' => $line['product_id'],
+                'items' => collect($cartData)->map(fn ($line) => [
+                    'product_id' => $line['product_id'] ?? $line['productId'] ?? null,
                     'qty' => $line['qty'],
                 ])->all(),
             ]);
         } catch (ValidationException $e) {
             $this->errors = $e->errors();
-
             return;
         }
 
@@ -295,9 +305,20 @@ class PosTerminal extends Component
 
     public function confirmCash()
     {
+        return $this->confirmCashWithCart($this->cart);
+    }
+
+    public function confirmCashClient(array $clientCart)
+    {
+        $this->cart = $clientCart;
+        return $this->confirmCashWithCart($clientCart);
+    }
+
+    private function confirmCashWithCart(array $cartData)
+    {
         $this->errors = [];
 
-        if (empty($this->cart)) {
+        if (empty($cartData)) {
             $this->errors = ['cart' => ['Keranjang kosong']];
             return;
         }
@@ -320,8 +341,8 @@ class PosTerminal extends Component
                 'metode_pembayaran' => 'tunai',
                 'discount_id' => $this->discountId,
                 'diskon' => $this->discountAmount,
-                'items' => collect($this->cart)->map(fn ($line) => [
-                    'product_id' => $line['product_id'],
+                'items' => collect($cartData)->map(fn ($line) => [
+                    'product_id' => $line['product_id'] ?? $line['productId'] ?? null,
                     'qty' => $line['qty'],
                 ])->all(),
             ]);
@@ -381,6 +402,12 @@ class PosTerminal extends Component
         if ($this->qrTimeLeft > 0) {
             $this->qrTimeLeft--;
         }
+    }
+
+    public function pollQrAndTick(): void
+    {
+        $this->pollQrStatus();
+        $this->decrementTimer();
     }
 
     public function getCustomerResultsProperty()

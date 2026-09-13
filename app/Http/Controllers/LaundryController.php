@@ -16,7 +16,8 @@ class LaundryController extends Controller
         // ponytail: jangan auto-select di sini — owner yang explisit buka
         // picker (mis. via "Ganti Cabang") harus bisa pindah cabang.
         // Auto-select saat session kosong ditangani EnsureLaundrySelected.
-        $laundries = $role === 'owner'
+        $isPrivileged = in_array($role, ['owner', 'developer', 'admin'], true);
+        $laundries = $isPrivileged
             ? Laundry::where('laundry_is_aktif', true)->orderBy('laundry_nama')->get()
             : Laundry::whereIn('laundry_id', $this->pivotIds())->orderBy('laundry_nama')->get();
 
@@ -34,9 +35,10 @@ class LaundryController extends Controller
         $laundry = Laundry::find($validated['laundry_id']);
         abort_unless($laundry, 404);
 
-        // ponytail: non-owner hanya boleh pilih cabang anggotanya.
+        // ponytail: non-privileged hanya boleh pilih cabang anggotanya; developer/admin bypass
         $role = Auth::user()->role ?? '';
-        if ($role !== 'owner' && ! in_array($laundry->laundry_id, $this->pivotIds())) {
+        $isPrivileged = in_array($role, ['owner', 'developer', 'admin'], true);
+        if (! $isPrivileged && ! in_array($laundry->laundry_id, $this->pivotIds())) {
             abort(403, 'Bukan anggota cabang ini.');
         }
 

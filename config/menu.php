@@ -47,7 +47,7 @@ return [
         ],
         [
             'label' => 'Laporan',
-            'roles' => ['developer', 'admin', 'owner'],
+            'roles' => ['developer', 'admin'],
             'items' => [
                 ['route' => 'report.order.getIndex', 'icon' => 'receipt_long', 'label' => 'Order', 'match' => ['report.order.*']],
                 ['route' => 'report.expense.getIndex', 'icon' => 'payments', 'label' => 'Pengeluaran', 'match' => ['report.expense.*'], 'roles' => ['developer']],
@@ -60,20 +60,20 @@ return [
         ],
         [
             'label' => 'Master Data',
-            'roles' => ['developer', 'admin', 'owner'],
+            'roles' => ['developer', 'admin'],
             'items' => [
-                ['route' => 'laundries.getTable', 'icon' => 'storefront', 'label' => 'Cabang', 'match' => ['laundries.*'], 'roles' => ['owner']],
-                ['route' => 'product.getTable', 'icon' => 'local_laundry_service', 'label' => 'Products', 'match' => ['product.*'], 'roles' => ['owner']],
-                ['route' => 'kategori.getTable', 'icon' => 'category', 'label' => 'Kategori', 'match' => ['kategori.*'], 'roles' => ['owner']],
-                ['route' => 'discount.getTable', 'icon' => 'sell', 'label' => 'Discount', 'match' => ['discount.*'], 'roles' => ['owner']],
+                ['route' => 'laundries.getTable', 'icon' => 'storefront', 'label' => 'Cabang', 'match' => ['laundries.*'], 'roles' => ['developer']],
+                ['route' => 'product.getTable', 'icon' => 'local_laundry_service', 'label' => 'Products', 'match' => ['product.*'], 'roles' => ['developer', 'admin']],
+                ['route' => 'kategori.getTable', 'icon' => 'category', 'label' => 'Kategori', 'match' => ['kategori.*'], 'roles' => ['developer', 'admin']],
+                ['route' => 'discount.getTable', 'icon' => 'sell', 'label' => 'Discount', 'match' => ['discount.*'], 'roles' => ['developer', 'admin']],
                 ['route' => 'customer.getTable', 'icon' => 'people', 'label' => 'Customers', 'match' => ['customer.*']],
-                ['route' => 'order-status.getTable', 'icon' => 'flag', 'label' => 'Status Order', 'match' => ['order-status.*'], 'roles' => ['owner']],
+                ['route' => 'order-status.getTable', 'icon' => 'flag', 'label' => 'Status Order', 'match' => ['order-status.*'], 'roles' => ['developer', 'admin']],
                 ['route' => 'user.getTable', 'icon' => 'manage_accounts', 'label' => 'Users', 'match' => ['user.*'], 'roles' => ['developer']],
             ],
         ],
         [
             'label' => 'CMS',
-            'roles' => ['editor'],
+            'roles' => ['developer', 'editor'],
             'items' => [
                 ['route' => 'cms-type.getTable', 'icon' => 'category', 'label' => 'Types', 'match' => ['cms-type.*']],
                 ['route' => 'field.getTable', 'icon' => 'input', 'label' => 'Fields', 'match' => ['field.*']],

@@ -7,7 +7,8 @@
     <p style="text-align:center; margin:4px 0;">{{ $order->order_code }}</p>
     <hr>
 
-    <p style="margin:2px 0;">Tanggal: {{ formatDate($order->created_at, true) }}</p>
+    <p style="margin:2px 0;">Tanggal: {{ formatDate($order->created_at) }}</p>
+    <p style="margin:2px 0;">Cabang: {{ $order->hasLaundry?->laundry_nama ?? '-' }}</p>
     <p style="margin:2px 0;">Pelanggan: {{ $customerNama }} ({{ $customerTelepon }})</p>
     <p style="margin:2px 0;">Pengambilan: {{ $order->order_metode_pengambilan?->description }}</p>
     @if ($order->order_metode_pengambilan->value === 'jemput')
@@ -45,8 +46,9 @@
     <hr>
 
     <p style="margin:2px 0;">Bayar: {{ $order->order_metode_pembayaran?->description }}</p>
-    <p style="margin:2px 0;">Estimasi selesai: {{ formatDate($order->order_estimasi_selesai, true) }}
-        ({{ ceil(abs($order->created_at->diffInHours($order->order_estimasi_selesai)) / 24) }} hari)</p>
+    {{-- Estimasi selesai di-hide sesuai request --}}
+    {{-- <p style="margin:2px 0;">Estimasi selesai: {{ formatDate($order->order_estimasi_selesai, true) }}
+        ({{ ceil(abs($order->created_at->diffInHours($order->order_estimasi_selesai)) / 24) }} hari)</p> --}}
     @if ($order->order_catatan)
         <p style="margin:2px 0;">Catatan: {{ $order->order_catatan }}</p>
     @endif

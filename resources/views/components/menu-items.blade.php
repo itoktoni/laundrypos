@@ -6,13 +6,16 @@
 
 @foreach($menu as $section)
     @php
-        // ponytail: section-level roles — skip entire section jika role tidak match
-        if (!empty($section['roles']) && !in_array(auth()->user()->role ?? '', $section['roles'], true)) {
+        $role = auth()->user()->role ?? '';
+        $isDev = $role === 'developer';
+        // ponytail: developer superadmin — bypass semua filter role di sidebar
+        if (!$isDev && !empty($section['roles']) && !in_array($role, $section['roles'], true)) {
             continue;
         }
         // ponytail: pre-filter items untuk hide section label jika semua items terfilter
-        $visibleItems = collect($section['items'])->filter(function ($i) {
-            return empty($i['roles']) || in_array(auth()->user()->role ?? '', $i['roles'], true);
+        $visibleItems = collect($section['items'])->filter(function ($i) use ($role, $isDev) {
+            if ($isDev) return true;
+            return empty($i['roles']) || in_array($role, $i['roles'], true);
         });
         if ($visibleItems->isEmpty()) {
             continue;
