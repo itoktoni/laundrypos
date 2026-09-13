@@ -8,9 +8,11 @@
             @bind($model ?? null)
 
                 <x-select col="6" name="movement_id_inventory" :options="$inventoryOptions" />
-                <x-input col="6" type="date" name="movement_tanggal" />
+                <x-input col="6" type="date" name="movement_tanggal" :default="now()->toDateString()" />
                 <x-select col="6" name="movement_tipe" :options="$tipeOptions" />
-                <x-select col="6" name="movement_uom" :options="$satuanOptions" />
+                <div class="hidden">
+                    <x-select col="12" name="movement_uom" :options="$satuanOptions" />
+                </div>
                 <x-input col="6" type="number" min="1" name="movement_qty" helper="Qty masuk/keluar (Keluar ditolak bila melebihi stok)" />
                 <div id="nominalWrapper" class="col-span-12 md:col-span-6">
                     <x-input col="12" type="number" step="0.01" min="0" name="movement_nominal" helper="Total nominal baris. Untuk Keluar otomatis 0" />

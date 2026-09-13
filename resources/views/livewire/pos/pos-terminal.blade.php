@@ -51,6 +51,17 @@ function posClientApp(){
             s=s.replace(/,?0+$/, '').replace(/,$/,'');
             return s;
         },
+        async recalcPromo(){
+            try{
+                let w=this.$wire;
+                if(!w || !w.discountId){
+                    // fallback via Livewire DOM
+                    const el=document.querySelector('[wire\\:id]');
+                    w = el? el.__livewire?.$wire : null;
+                }
+                if(w?.discountId) await w.applyPromoClient(this.cart);
+            }catch(e){}
+        },
         addToCart(idOrObj){
             let p=null;
             if(typeof idOrObj==='object' && idOrObj!==null){ p=idOrObj; p.id=p.id ?? p.product_id; }
@@ -60,6 +71,7 @@ function posClientApp(){
             let idx=this.cart.findIndex(l=>l.product_id===pid);
             if(idx!==-1){ let cur=this.normalizeQty(this.cart[idx].qty) ?? 1; this.cart[idx].qty=Math.min(999, Math.round((cur+1)*1000)/1000); }
             else { this.cart.push({product_id:pid, nama:p.nama, satuan:p.satuan, harga:p.harga, estimasi_jam:p.estimasi_jam ?? 0, qty:1}); }
+            this.recalcPromo();
         },
         bumpQty(i, delta){
             if(!this.cart[i]) return;
@@ -68,6 +80,7 @@ function posClientApp(){
             let n=Math.round((cur+d)*1000)/1000;
             n=Math.max(0.5, Math.min(999, n));
             this.cart[i].qty=n;
+            this.recalcPromo();
         },
         setQty(i, val){
             if(!this.cart[i]) return;
@@ -75,8 +88,9 @@ function posClientApp(){
             if(q===null || q<0.5) q=0.5;
             q=Math.round(Math.min(999,q)*1000)/1000;
             this.cart[i].qty=q;
+            this.recalcPromo();
         },
-        removeLine(i){ this.cart.splice(i,1); },
+        removeLine(i){ this.cart.splice(i,1); this.recalcPromo(); },
         get subtotal(){ return this.cart.reduce((s,l)=> s + (parseFloat(l.harga)||0) * (this.normalizeQty(l.qty) ?? 0), 0); },
         get total(){
             let disc=0;
@@ -287,16 +301,16 @@ function posClientApp(){
                 <div class="flex gap-2">
                     <div class="relative flex-1">
                         <span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-on-surface-variant text-[18px]">sell</span>
-                        <input type="text" wire:model="promoKode" wire:keydown.enter="applyPromo"
+                        <input type="text" wire:model="promoKode" @keydown.enter="await $wire.set('cart', cart); await $wire.applyPromoClient(cart)"
                                placeholder="Kode promo..."
                                class="input input-sm !pl-11 w-full" />
                     </div>
-                    <button type="button" wire:click="applyPromo" class="btn btn-sm btn-primary">Pakai</button>
+                    <button type="button" @click="await $wire.set('cart', cart); await $wire.applyPromoClient(cart)" class="btn btn-sm btn-primary">Pakai</button>
                 </div>
                 @if (! empty($suggestedPromos))
                     <div class="flex flex-wrap gap-1 mt-2">
                         @foreach ($suggestedPromos as $promo)
-                            <button type="button" @click="await $wire.set('promoKode', '{{ $promo->discount_kode }}'); await $wire.applyPromo()"
+                            <button type="button" @click="await $wire.set('promoKode', '{{ $promo->discount_kode }}'); await $wire.applyPromoClient(cart)"
                                     class="text-[10px] px-2 py-0.5 border border-outline-variant rounded-full hover:bg-surface-container transition">
                                 {{ $promo->discount_kode }}
                             </button>

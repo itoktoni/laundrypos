@@ -101,6 +101,13 @@ class PosTerminal extends Component
         unset($this->errors['promo']);
     }
 
+    // Client cart sync — JS cart (Alpine) → server cart before hitung diskon
+    public function applyPromoClient(array $cart): void
+    {
+        $this->cart = $cart;
+        $this->applyPromo();
+    }
+
     public function removePromo(): void
     {
         $this->promoKode = '';
@@ -254,6 +261,11 @@ class PosTerminal extends Component
     private function confirmOrderWithCart(array $cartData)
     {
         $this->errors = [];
+        // pastikan diskon sinkron dengan cart terbaru (subtotal client) sebelum simpan
+        $this->cart = $cartData;
+        if ($this->promoKode !== '' && $this->discountId) {
+            $this->applyPromo();
+        }
 
         if ($this->customerId) {
             $walkinNama = null;
@@ -321,6 +333,12 @@ class PosTerminal extends Component
         if (empty($cartData)) {
             $this->errors = ['cart' => ['Keranjang kosong']];
             return;
+        }
+
+        // sync diskon dengan cart terbaru sebelum simpan (95k -> diskon 5k harus konsisten)
+        $this->cart = $cartData;
+        if ($this->promoKode !== '' && $this->discountId) {
+            $this->applyPromo();
         }
 
         if ($this->customerId) {
