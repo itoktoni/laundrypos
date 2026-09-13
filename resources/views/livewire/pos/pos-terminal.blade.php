@@ -153,12 +153,12 @@ function posClientApp(){
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 max-lg:flex-1 max-lg:min-h-0 max-lg:flex max-lg:flex-col">
-    {{-- Mobile tabs: Belanja | Checkout --}}
+    {{-- Mobile tabs: Service | Checkout --}}
     <div class="lg:hidden flex gap-1 p-1 rounded-2xl bg-surface-container border border-outline-variant shrink-0 sticky top-16 z-30">
         <button type="button" @click="posTab = 'belanja'"
                 :class="posTab === 'belanja' ? 'bg-primary text-on-primary shadow-sm' : 'text-on-surface-variant'"
                 class="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-sm font-bold transition-colors">
-            <span class="material-symbols-outlined text-[18px]">storefront</span> Belanja
+            <span class="material-symbols-outlined text-[18px]">local_laundry_service</span> Service
         </button>
         <button type="button" @click="posTab = 'checkout'"
                 :class="posTab === 'checkout' ? 'bg-primary text-on-primary shadow-sm' : 'text-on-surface-variant'"
@@ -415,9 +415,6 @@ function posClientApp(){
                    class="btn btn-outline flex-1">
                     Lihat Order
                 </a>
-                <button type="button" @click="printOrder($wire.qrOrderId, 'browser')" class="btn btn-outline flex-1 inline-flex items-center justify-center gap-1">
-                    <span class="material-symbols-outlined text-[16px]">print</span> Cetak
-                </button>
                 <button type="button" wire:click="closeQr" class="btn btn-primary flex-1">
                     Selesai
                 </button>

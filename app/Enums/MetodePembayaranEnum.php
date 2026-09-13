@@ -19,8 +19,8 @@ final class MetodePembayaranEnum extends Enum
     {
         return match ($value) {
             self::TUNAI => 'Tunai',
-            self::TRANSFER => 'Transfer',
-            self::DOMPET_DIGITAL => 'Dompet Digital',
+            self::TRANSFER => 'Non Tunai',
+            self::DOMPET_DIGITAL => 'Non Tunai',
             default => parent::getDescription($value),
         };
     }

@@ -270,7 +270,7 @@ class PosTerminal extends Component
                 'walkin_telepon' => $walkinTelepon,
                 'save_walkin_customer' => ! $this->customerId && $this->saveWalkinAsCustomer,
                 'metode_pengambilan' => 'antar_toko',
-                'metode_pembayaran' => 'tunai',
+                'metode_pembayaran' => \App\Enums\MetodePembayaranEnum::DOMPET_DIGITAL,
                 'discount_id' => $this->discountId,
                 'diskon' => $this->discountAmount,
                 'items' => collect($cartData)->map(fn ($line) => [

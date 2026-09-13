@@ -10,8 +10,8 @@
     <p style="margin:2px 0;">Tanggal: {{ formatDate($order->created_at) }}</p>
     <p style="margin:2px 0;">Cabang: {{ $order->hasLaundry?->laundry_nama ?? '-' }}</p>
     <p style="margin:2px 0;">Pelanggan: {{ $customerNama }} ({{ $customerTelepon }})</p>
-    <p style="margin:2px 0;">Pengambilan: {{ $order->order_metode_pengambilan?->description }}</p>
-    @if ($order->order_metode_pengambilan->value === 'jemput')
+    @if ($order->order_metode_pengambilan?->value === 'jemput')
+        <p style="margin:2px 0;">Pengambilan: {{ $order->order_metode_pengambilan?->description }}</p>
         <p style="margin:2px 0;">Alamat: {{ $order->order_alamat_jemput }}</p>
         <p style="margin:2px 0;">Slot: {{ formatDate($order->order_slot_waktu, true) }}</p>
     @endif

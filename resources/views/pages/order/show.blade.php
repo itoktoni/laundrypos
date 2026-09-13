@@ -191,14 +191,14 @@
                         <p class="text-sm font-medium">{{ formatDate($order->order_estimasi_selesai, true) }}</p>
                         <p class="text-sm text-on-surface-variant">± {{ ceil(abs($order->created_at->diffInHours($order->order_estimasi_selesai)) / 24) }} hari kerja</p>
                     </div>
+                    @if ($order->order_metode_pengambilan?->value === 'jemput')
                     <div>
                         <p class="text-xs uppercase tracking-wide text-on-surface-variant mb-2">Pengambilan</p>
                         <p class="text-sm font-medium">{{ $order->order_metode_pengambilan?->description }}</p>
-                        @if ($order->order_metode_pengambilan?->value === 'jemput')
-                            <p class="text-sm text-on-surface-variant">{{ $order->order_alamat_jemput }}</p>
-                            <p class="text-sm text-on-surface-variant">Slot: {{ formatDate($order->order_slot_waktu, true) }}</p>
-                        @endif
+                        <p class="text-sm text-on-surface-variant">{{ $order->order_alamat_jemput }}</p>
+                        <p class="text-sm text-on-surface-variant">Slot: {{ formatDate($order->order_slot_waktu, true) }}</p>
                     </div>
+                    @endif
                     <div>
                         <p class="text-xs uppercase tracking-wide text-on-surface-variant mb-2">Kasir</p>
                         <p class="text-sm font-medium">{{ $order->hasUser?->name ?? '-' }}</p>
