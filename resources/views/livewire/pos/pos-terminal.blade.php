@@ -355,15 +355,15 @@ function posClientApp(){
 </div>
 @endif
 
-{{-- QRIS Modal --}}
+{{-- QRIS Modal — tidak boleh dismiss via backdrop, harus Cetak (lunas) atau Lihat Order --}}
 @if ($showQr)
-<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" wire:click.self="closeQr"
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
      wire:poll.1s="pollQrAndTick">
     <div class="bg-surface-container-lowest rounded-2xl shadow-2xl p-6 w-full max-w-sm mx-4 text-center">
 
         @if ($qrPaid)
-            {{-- PAID SUCCESS --}}
-            <div class="flex flex-col items-center gap-3 py-4" x-data x-init="$nextTick(() => { setTimeout(() => $wire.closeQr(), {{ config('app.qris_paid_display', 3000) }}) })">
+            {{-- PAID SUCCESS — jangan auto-dismiss, user cetak dulu (Non Tunai) --}}
+            <div class="flex flex-col items-center gap-3 py-4">
                 <div class="w-20 h-20 rounded-full bg-success-container flex items-center justify-center">
                     <span class="material-symbols-outlined text-[48px] text-on-success-container">check_circle</span>
                 </div>
@@ -371,13 +371,14 @@ function posClientApp(){
                 <p class="text-sm text-on-surface-variant">{{ $qrOrderCode }}</p>
                 <p class="text-xl font-bold text-success">{{ formatAngka($qrTotal + $qrSuffix) }}</p>
                 <div class="flex gap-2 mt-3 w-full">
-                    <button type="button" @click="printOrder($wire.qrOrderId, 'browser')" class="btn btn-outline flex-1 inline-flex items-center justify-center gap-1">
-                        <span class="material-symbols-outlined text-[16px]">print</span> Cetak Struk
+                    <button type="button" @click="printOrder($wire.qrOrderId, 'browser'); $wire.closeQr()" class="btn btn-primary flex-1 inline-flex items-center justify-center gap-1">
+                        <span class="material-symbols-outlined text-[16px]">print</span> Cetak & Selesai
                     </button>
-                    <button type="button" @click="printOrder($wire.qrOrderId, 'thermal')" class="btn btn-outline flex-1 inline-flex items-center justify-center gap-1">
+                    <button type="button" @click="printOrder($wire.qrOrderId, 'thermal'); $wire.closeQr()" class="btn btn-outline flex-1 inline-flex items-center justify-center gap-1">
                         <span class="material-symbols-outlined text-[16px]">receipt</span> Thermal
                     </button>
                 </div>
+                <p class="text-xs text-on-surface-variant mt-2">Bayar: Non Tunai — cetak untuk menutup</p>
             </div>
         @else
             {{-- QR CODE --}}
@@ -415,9 +416,9 @@ function posClientApp(){
                    class="btn btn-outline flex-1">
                     Lihat Order
                 </a>
-                <button type="button" wire:click="closeQr" class="btn btn-primary flex-1">
-                    Selesai
-                </button>
+                <span class="btn btn-outline flex-1 opacity-50 cursor-not-allowed inline-flex items-center justify-center gap-1">
+                    <span class="material-symbols-outlined text-[16px]">hourglass_empty</span> Menunggu Bayar
+                </span>
             </div>
         @endif
 

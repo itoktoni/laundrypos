@@ -52,6 +52,11 @@ class InventoryMovementController extends Controller
             }
         }
 
+        // Keluar: nominal di-hide di form, paksa 0 di server
+        if ($request->input('movement_tipe') === InventoryTipeEnum::KELUAR) {
+            $request->merge(['movement_nominal' => 0]);
+        }
+
         // Guard stok-minus untuk tipe keluar di dalam transaction + lock.
         if ($request->input('movement_tipe') === InventoryTipeEnum::KELUAR) {
             $inventoryId = (int) $request->input('movement_id_inventory');
@@ -97,5 +102,13 @@ class InventoryMovementController extends Controller
         });
 
         return $this->response($response);
+    }
+
+    public function postUpdate(GeneralRequest $request, $id)
+    {
+        if ($request->input('movement_tipe') === InventoryTipeEnum::KELUAR) {
+            $request->merge(['movement_nominal' => 0]);
+        }
+        return parent::postUpdate($request, $id);
     }
 }

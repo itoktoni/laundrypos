@@ -12,7 +12,9 @@
                 <x-select col="6" name="movement_tipe" :options="$tipeOptions" />
                 <x-select col="6" name="movement_uom" :options="$satuanOptions" />
                 <x-input col="6" type="number" min="1" name="movement_qty" helper="Qty masuk/keluar (Keluar ditolak bila melebihi stok)" />
-                <x-input col="6" type="number" step="0.01" min="0" name="movement_nominal" helper="Total nominal baris. Untuk Keluar boleh 0 (dinilai avg berjalan di kartu)" />
+                <div id="nominalWrapper" class="col-span-12 md:col-span-6">
+                    <x-input col="12" type="number" step="0.01" min="0" name="movement_nominal" helper="Total nominal baris. Untuk Keluar otomatis 0" />
+                </div>
                 <div class="col-span-12 md:col-span-6 -mt-2">
                     <span id="hargaAcuan" class="font-label-caps text-label-caps text-on-surface-variant"></span>
                 </div>
@@ -32,10 +34,19 @@
             var nomEl = document.querySelector('[name="movement_nominal"]');
             var tipeEl = document.querySelector('[name="movement_tipe"]');
             var hint = document.getElementById('hargaAcuan');
+            var nominalWrapper = document.getElementById('nominalWrapper');
             if (!sel || !hint) return;
+            var isKeluar = tipeEl && tipeEl.value === 'keluar';
+            var isMasuk = tipeEl && tipeEl.value === 'masuk';
+            // Hide nominal untuk keluar, show untuk masuk
+            if (nominalWrapper) {
+                nominalWrapper.style.display = isKeluar ? 'none' : '';
+                if (isKeluar && nomEl) { nomEl.value = '0'; }
+            }
+            if (hint) hint.style.display = isKeluar ? 'none' : '';
             var harga = parseFloat(HARGA_ACUAN[sel.value] ?? 0) || 0;
-            hint.textContent = harga > 0 ? 'Harga acuan: Rp ' + harga.toLocaleString('id-ID') + ' / satuan' : '';
-            if (autoFill && tipeEl && tipeEl.value === 'masuk' && harga > 0 && qtyEl && nomEl && !parseFloat(nomEl.value)) {
+            hint.textContent = harga > 0 && !isKeluar ? 'Harga acuan: Rp ' + harga.toLocaleString('id-ID') + ' / satuan' : '';
+            if (autoFill && isMasuk && harga > 0 && qtyEl && nomEl && !parseFloat(nomEl.value)) {
                 var qty = parseInt(qtyEl.value, 10) || 0;
                 if (qty > 0) nomEl.value = (qty * harga).toFixed(2);
             }
