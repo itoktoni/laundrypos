@@ -51,14 +51,40 @@
                 if (qty > 0) nomEl.value = (qty * harga).toFixed(2);
             }
         }
-        document.addEventListener('DOMContentLoaded', function () {
+        function bindNominalEvents(){
             ['movement_id_inventory', 'movement_tipe', 'movement_qty'].forEach(function (n) {
                 var el = document.querySelector('[name="' + n + '"]');
-                if (el) el.addEventListener('change', function () { refreshHargaAcuan(true); });
+                if (el && !el._nominalBound) {
+                    el._nominalBound = true;
+                    el.addEventListener('change', function () { refreshHargaAcuan(true); });
+                    el.addEventListener('input', function () { refreshHargaAcuan(true); });
+                    // TomSelect support: listen to tomselect change via underlying select
+                    if (el.tomselect) el.tomselect.on('change', function(){ refreshHargaAcuan(true); });
+                }
             });
             var qtyEl = document.querySelector('[name="movement_qty"]');
-            if (qtyEl) qtyEl.addEventListener('input', function () { refreshHargaAcuan(true); });
+            if (qtyEl && !qtyEl._nominalBound2) {
+                qtyEl._nominalBound2 = true;
+                qtyEl.addEventListener('input', function () { refreshHargaAcuan(true); });
+            }
+        }
+        document.addEventListener('DOMContentLoaded', function () {
+            bindNominalEvents();
+            // delegated listener for dynamically replaced selects (mobile TomSelect or re-render)
+            document.addEventListener('change', function(e){
+                if(e.target && e.target.name && ['movement_id_inventory','movement_tipe','movement_qty'].indexOf(e.target.name)!==-1){
+                    refreshHargaAcuan(true);
+                }
+            });
+            document.addEventListener('input', function(e){
+                if(e.target && e.target.name==='movement_qty'){ refreshHargaAcuan(true); }
+            });
             refreshHargaAcuan(false);
+            // mobile: select may init late (TomSelect) — retry a few times
+            setTimeout(function(){ bindNominalEvents(); refreshHargaAcuan(false); }, 300);
+            setTimeout(function(){ bindNominalEvents(); refreshHargaAcuan(false); }, 800);
+            // polling fallback for mobile where change not fired (e.g., picker)
+            setInterval(function(){ refreshHargaAcuan(false); }, 300);
         });
     </script>
 
